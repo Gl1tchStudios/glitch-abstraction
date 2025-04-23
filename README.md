@@ -183,6 +183,59 @@ Lib.Cutscene.GetTime() -- Get current cutscene time (ms)
 Lib.Cutscene.SkipToTime(time) -- Skip to specific time in cutscene (ms)
 ```
 
+### Progression Functions (pickle_xp)
+
+#### Client-Side
+```lua
+-- Experience & Levels
+Lib.Progression.GetXP() -- Get player's current XP
+Lib.Progression.GetLevel() -- Get player's current level
+Lib.Progression.GetRankData() -- Get detailed rank data
+Lib.Progression.GetUserData() -- Get user's progression data
+Lib.Progression.HasRank(rank) -- Check if player has specific rank
+
+-- UI Functions
+Lib.Progression.DrawXPBar(show) -- Show/hide XP bar
+Lib.Progression.ShowRank(state) -- Show/hide rank display
+```
+
+#### Server-Side
+```lua
+-- Experience Management
+Lib.Progression.GetXP(source) -- Get player's XP
+Lib.Progression.AddXP(source, amount, reason) -- Add XP to player
+Lib.Progression.SetXP(source, amount) -- Set player's XP
+Lib.Progression.GetLevel(source) -- Get player's level
+Lib.Progression.SetLevel(source, level) -- Set player's level
+Lib.Progression.AddLevels(source, amount) -- Add levels to player
+
+-- XP Sources
+Lib.Progression.RegisterXPSource(name, min, max, notify) -- Register XP source
+Lib.Progression.AwardXPFromSource(source, sourceName) -- Award XP from source
+
+-- Rank Management
+Lib.Progression.GetRankData(source) -- Get player's rank data
+Lib.Progression.GetUserData(source) -- Get player's user data
+Lib.Progression.HasRank(source, rank) -- Check if player has specific rank
+```
+
+### Scaleform Functions (Client-Side)
+```lua
+-- Basic Scaleform Management
+Lib.Scaleform.Load(name) -- Load a scaleform by name, returns handle
+Lib.Scaleform.Unload(nameOrHandle) -- Unload a scaleform by name or handle
+Lib.Scaleform.CallFunction(handleOrName, returnValue, funcName, ...) -- Call function on scaleform
+Lib.Scaleform.Render(handleOrName, x, y, width, height, r, g, b, a, scale) -- Render scaleform 2D
+Lib.Scaleform.Render3D(handleOrName, x, y, z, rx, ry, rz, scale) -- Render scaleform in 3D world
+
+-- Common Scaleform UIs
+Lib.Scaleform.SetupInstructionalButtons(buttons) -- Create instructional buttons UI
+Lib.Scaleform.ShowMessageBox(title, subtitle, footer) -- Show a large message box
+Lib.Scaleform.ShowMissionPassed(title, subtitle, rp, money) -- Show mission passed UI
+Lib.Scaleform.ShowCountdown(number, message) -- Show a countdown UI
+Lib.Scaleform.ShowCredits(items) -- Show scrolling credits UI
+```
+
 ## Basic Usage
 ```lua
 local Lib = exports['glitch-lib']:GetLib()

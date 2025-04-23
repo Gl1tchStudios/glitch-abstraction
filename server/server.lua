@@ -65,11 +65,18 @@ local function InitializeLibrary()
         end
     end
     
-    if Config.xpSystem == 'pickle_xp' and GetResourceState('pickle_xp') ~= 'missing' then
+    -- Load progression system
+    local progressionLoaded = false
+    if GetResourceState('pickle_xp') ~= 'missing' then
+        GlitchLib.Utils.DebugLog('Loading progression system: pickle_xp')
+        
+        -- Load pickle_xp module
         local status, err = pcall(function()
-            local xpModule = LoadResourceFile(GetCurrentResourceName(), 'server/progression/pickle_xp.lua')
-            if xpModule then
-                load(xpModule)()
+            local progressionModule = LoadResourceFile(GetCurrentResourceName(), 'server/progression/pickle_xp.lua')
+            if progressionModule then
+                load(progressionModule)()
+                GlitchLib.Progression.Type = 'pickle_xp'
+                progressionLoaded = true
             else
                 error('Progression module not found')
             end
@@ -78,6 +85,10 @@ local function InitializeLibrary()
         if not status then
             GlitchLib.Utils.DebugLog('Failed to load progression system: ' .. err)
         end
+    end
+
+    if not progressionLoaded then
+        GlitchLib.Utils.DebugLog('No supported progression system found')
     end
 
     -- Load door lock system

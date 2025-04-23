@@ -113,12 +113,18 @@ local function InitializeLibrary()
         GlitchLib.Utils.DebugLog('No supported door lock system found')
     end
     
-    -- Initialize progression system if enabled
-    if Config.xpSystem == 'pickle_xp' and GetResourceState('pickle_xp') ~= 'missing' then
+    -- Load progression system
+    local progressionLoaded = false
+    if GetResourceState('pickle_xp') ~= 'missing' then
+        GlitchLib.Utils.DebugLog('Loading progression system: pickle_xp')
+        
+        -- Load pickle_xp module
         local status, err = pcall(function()
-            local xpModule = LoadResourceFile(GetCurrentResourceName(), 'client/progression/pickle_xp.lua')
-            if xpModule then
-                load(xpModule)()
+            local progressionModule = LoadResourceFile(GetCurrentResourceName(), 'client/progression/pickle_xp.lua')
+            if progressionModule then
+                load(progressionModule)()
+                GlitchLib.Progression.Type = 'pickle_xp'
+                progressionLoaded = true
             else
                 error('Progression module not found')
             end
@@ -127,6 +133,25 @@ local function InitializeLibrary()
         if not status then
             GlitchLib.Utils.DebugLog('Failed to load progression system: ' .. err)
         end
+    end
+    
+    if not progressionLoaded then
+        GlitchLib.Utils.DebugLog('No supported progression system found')
+    end
+
+    -- Load scaleform module
+    local status, err = pcall(function()
+        local scaleformModule = LoadResourceFile(GetCurrentResourceName(), 'client/scaleform.lua')
+        if scaleformModule then
+            load(scaleformModule)()
+            GlitchLib.Utils.DebugLog('Scaleform module loaded')
+        else
+            error('Scaleform module not found')
+        end
+    end)
+
+    if not status then
+        GlitchLib.Utils.DebugLog('Failed to load scaleform module: ' .. err)
     end
     
     GlitchLib.IsReady = frameworkLoaded

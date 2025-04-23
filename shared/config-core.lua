@@ -6,9 +6,9 @@ GlitchLib = {
     Progression = {},  -- Progression/XP functions
     DoorLock = {},     -- Door lock functions
     Cutscene = {},     -- Cutscene functions
+    Scaleform = {},    -- Scaleform functions
     
     -- Server-only components
-    
     Database = {},     -- Database access
     
     Utils = {},        -- Utility functions
