@@ -1,19 +1,20 @@
 GlitchLib = {
-    Framework = {},    -- Framework functions
-    UI = {},           -- UI functions
-    Target = {},       -- Target functions
-    Inventory = {},    -- Inventory functions
-    Progression = {},  -- Progression/XP functions
-    DoorLock = {},     -- Door lock functions
-    Cutscene = {},     -- Cutscene functions
-    Scaleform = {},    -- Scaleform functions
+    Framework = {},      -- Framework functions
+    UI = {},             -- UI functions
+    Target = {},         -- Target functions
+    Inventory = {},      -- Inventory functions
+    Progression = {},    -- Progression/XP functions
+    DoorLock = {},       -- Door lock functions
+    Cutscene = {},       -- Cutscene functions
+    Scaleform = {},      -- Scaleform functions
+    Notifications = {},  -- Notification functions
     
     -- Server-only components
-    Database = {},     -- Database access
+    Database = {},       -- Database access
     
-    Utils = {},        -- Utility functions
+    Utils = {},          -- Utility functions
     
-    IsReady = false,   -- Whether the library is initialized
+    IsReady = false,     -- Whether the library is initialized
     Debug = Config.Debug
 }
 

@@ -139,6 +139,87 @@ local function InitializeLibrary()
         GlitchLib.Utils.DebugLog('No supported progression system found')
     end
 
+    -- Load notification system
+    local notificationLoaded = false
+
+    -- First check if config specifies a system
+    if Config.NotificationSystem ~= 'auto' then
+        local notifSystem = Config.NotificationSystem
+        GlitchLib.Utils.DebugLog('Using configured notification system: ' .. notifSystem)
+        
+        local status, err = pcall(function()
+            local notifModule = LoadResourceFile(GetCurrentResourceName(), 'client/notifications/' .. string.lower(notifSystem) .. '.lua')
+            if notifModule then
+                load(notifModule)()
+                GlitchLib.Notifications.Type = notifSystem
+                notificationLoaded = true
+            else
+                error('Notification module not found: ' .. notifSystem)
+            end
+        end)
+        
+        if not status then
+            GlitchLib.Utils.DebugLog('Failed to load notification system: ' .. err)
+        end
+    else
+        -- Auto-detect notification system
+        for _, notif in ipairs(Config.Notifications) do
+            if GetResourceState(notif.resourceName) ~= 'missing' then
+                GlitchLib.Utils.DebugLog('Loading notification system: ' .. notif.name)
+                
+                local status, err = pcall(function()
+                    local notifModule = LoadResourceFile(GetCurrentResourceName(), 'client/notifications/' .. string.lower(notif.name) .. '.lua')
+                    if notifModule then
+                        load(notifModule)()
+                        GlitchLib.Notifications.Type = notif.name
+                        notificationLoaded = true
+                    else
+                        error('Notification module not found: ' .. notif.name)
+                    end
+                end)
+                
+                if not status then
+                    GlitchLib.Utils.DebugLog('Failed to load notification system: ' .. err)
+                end
+                
+                break
+            end
+        end
+    end
+
+    if not notificationLoaded then
+        -- Fallback to framework notifications
+        GlitchLib.Utils.DebugLog('No standalone notification system found, using framework notifications')
+        
+        GlitchLib.Notifications.Show = function(params)
+            GlitchLib.Framework.Notify(params.description or params.message or params.title, params.type)
+        end
+        
+        GlitchLib.Notifications.Success = function(title, message, duration)
+            GlitchLib.Framework.Notify(message or title, 'success', duration)
+        end
+        
+        GlitchLib.Notifications.Error = function(title, message, duration)
+            GlitchLib.Framework.Notify(message or title, 'error', duration)
+        end
+        
+        GlitchLib.Notifications.Info = function(title, message, duration)
+            GlitchLib.Framework.Notify(message or title, 'info', duration)
+        end
+        
+        GlitchLib.Notifications.Warning = function(title, message, duration)
+            GlitchLib.Framework.Notify(message or title, 'warning', duration)
+        end
+        
+        -- For backward compatibility
+        GlitchLib.UI.Notify = function(params)
+            GlitchLib.Notifications.Show(params)
+        end
+        
+        GlitchLib.Notifications.Type = 'framework'
+        notificationLoaded = true
+    end
+
     -- Load scaleform module
     local status, err = pcall(function()
         local scaleformModule = LoadResourceFile(GetCurrentResourceName(), 'client/scaleform.lua')

@@ -128,6 +128,16 @@ Lib.UI.ShowTextUI(message, options) -- Show persistent text UI element
 Lib.UI.HideTextUI() -- Hide text UI element
 ```
 
+### Notification Functions (Client-Side)
+```lua
+-- Basic Notifications
+Lib.Notifications.Show(params) -- Show notification with parameters
+Lib.Notifications.Success(title, message, duration) -- Show success notification
+Lib.Notifications.Error(title, message, duration) -- Show error notification
+Lib.Notifications.Info(title, message, duration) -- Show info notification
+Lib.Notifications.Warning(title, message, duration) -- Show warning notification
+```
+
 ### Target System Functions
 
 #### Client-Side

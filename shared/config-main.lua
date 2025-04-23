@@ -27,12 +27,24 @@ Config.DoorLock = {
     {name = 'esx', resourceName = 'esx_doorlock'},
 }
 
+-- Notification systems
+Config.Notifications = {
+    {name = 'glitch', resourceName = 'glitch-notifications'},
+    {name = 'ox', resourceName = 'ox_lib'},
+    {name = 'qb', resourceName = 'qb-core'},
+    {name = 'esx', resourceName = 'es_extended'},
+}
+
 Config.FrameworkMapping = {
     ["QBox"] = "QBCore" -- QBox is the same as QBCore as it's a fork of it
 }
 
 -- UI system to use
 Config.UISystem = 'oxlib' -- 'oxlib', 'qb', 'esx'
+
+-- Default notification system
+Config.NotificationSystem = 'auto' -- 'auto', 'glitch', 'ox', 'qb', 'esx
+
 Config.ProgressCircle = true -- Use circle progress bar for oxlib
 
 -- XP system

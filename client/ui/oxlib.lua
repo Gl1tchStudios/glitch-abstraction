@@ -55,18 +55,6 @@ GlitchLib.UI.HideTextUI = function()
     lib.hideTextUI()
 end
 
--- Notifications
-GlitchLib.UI.Notify = function(params)
-    lib.notify({
-        title = params.title,
-        description = params.description,
-        type = params.type or 'info',
-        position = params.position or 'top-right',
-        duration = params.duration or 3000,
-        icon = params.icon
-    })
-end
-
 -- Alert dialog
 GlitchLib.UI.Alert = function(title, message, type, icon)
     return lib.alertDialog({

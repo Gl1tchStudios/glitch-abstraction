@@ -208,11 +208,6 @@ GlitchLib.UI.HideTextUI = function()
     end
 end
 
--- Notifications
-GlitchLib.UI.Notify = function(params)
-    ESX.ShowNotification(params.description or params.message)
-end
-
 -- Alert dialog (using ESX notification as fallback)
 GlitchLib.UI.Alert = function(title, message, type, icon)
     -- ESX doesn't have built-in alerts, using notification

@@ -115,11 +115,6 @@ GlitchLib.UI.HideTextUI = function()
     end
 end
 
--- Notifications
-GlitchLib.UI.Notify = function(params)
-    QBCore.Functions.Notify(params.description or params.message, params.type or "primary", params.duration or 3000)
-end
-
 -- Alert dialog (using phone notification as fallback)
 GlitchLib.UI.Alert = function(title, message, type, icon)
     -- QB doesn't have built-in alerts, using notification
