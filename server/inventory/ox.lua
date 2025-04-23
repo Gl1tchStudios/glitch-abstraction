@@ -1,4 +1,4 @@
--- OX Inventory Implementation
+-- OX Inventory
 GlitchLib.Utils.DebugLog('OX Inventory module loaded')
 
 -- Item Management

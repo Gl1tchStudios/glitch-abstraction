@@ -1,4 +1,4 @@
--- ox_doorlock Server Implementation
+-- ox_doorlock Server
 GlitchLib.Utils.DebugLog('ox_doorlock server module loaded')
 
 -- Get door state

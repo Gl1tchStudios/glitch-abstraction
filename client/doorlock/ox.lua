@@ -1,4 +1,4 @@
--- ox_doorlock Implementation
+-- ox_doorlock
 GlitchLib.Utils.DebugLog('ox_doorlock module loaded')
 
 -- Check if a door is locked

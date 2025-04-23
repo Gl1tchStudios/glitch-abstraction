@@ -1,4 +1,4 @@
--- QB Inventory Implementation
+-- QB Inventory
 GlitchLib.Utils.DebugLog('QB Inventory module loaded')
 
 local QBCore = exports['qb-core']:GetCoreObject()

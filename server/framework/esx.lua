@@ -1,4 +1,4 @@
--- ESX Legacy Framework Implementation
+-- ESX Legacy Framework
 local ESX = exports['es_extended']:getSharedObject()
 GlitchLib.Utils.DebugLog('ESX Framework module loaded')
 

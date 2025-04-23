@@ -1,4 +1,4 @@
--- esx_doorlock Server Implementation
+-- esx_doorlock Server
 GlitchLib.Utils.DebugLog('esx_doorlock server module loaded')
 
 local ESX = exports['es_extended']:getSharedObject()

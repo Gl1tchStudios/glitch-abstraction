@@ -1,4 +1,4 @@
--- QBCore Framework Implementation
+-- QBCore Framework (QBox uses the same functions)
 local QBCore = exports['qb-core']:GetCoreObject()
 GlitchLib.Utils.DebugLog('QBCore Framework module loaded')
 

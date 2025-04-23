@@ -1,4 +1,4 @@
--- qb-doorlock Implementation
+-- qb-doorlock
 GlitchLib.Utils.DebugLog('qb-doorlock module loaded')
 
 -- Local cache for QBCore door information

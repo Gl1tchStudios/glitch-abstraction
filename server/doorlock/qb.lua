@@ -1,4 +1,4 @@
--- qb-doorlock Server Implementation
+-- qb-doorlock Server
 GlitchLib.Utils.DebugLog('qb-doorlock server module loaded')
 
 local QBCore = exports['qb-core']:GetCoreObject()

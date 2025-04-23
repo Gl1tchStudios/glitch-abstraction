@@ -22,7 +22,7 @@ A comprehensive abstraction layer for FiveM that seamlessly integrates multiple 
 ### Supported Target Systems
 - ox_target
 - qb-target
-- bt-target (ESX)
+- bt-target
 
 ### Supported Door Lock Systems
 - ox_doorlock
@@ -166,6 +166,21 @@ Lib.DoorLock.PlayerHasAccess(source, door) -- Check if player has access to door
 Lib.DoorLock.GetAllDoors() -- Get all doors
 Lib.DoorLock.AddDoor(door) -- Add a new door (if supported)
 Lib.DoorLock.RemoveDoor(door) -- Remove a door (if supported)
+```
+
+#### Cutscenes Functions (Client-Side)
+```lua
+-- Appearance Management
+Lib.Cutscene.SavePlayerAppearance() -- Save current player appearance
+Lib.Cutscene.RestorePlayerAppearance() -- Restore saved player appearance
+
+-- Cutscene Control
+Lib.Cutscene.Play(cutsceneName, options) -- Play cutscene with options
+Lib.Cutscene.Stop(immediate) -- Stop current cutscene
+Lib.Cutscene.IsActive() -- Check if a cutscene is active
+Lib.Cutscene.IsPlaying() -- Check if a cutscene is currently playing
+Lib.Cutscene.GetTime() -- Get current cutscene time (ms)
+Lib.Cutscene.SkipToTime(time) -- Skip to specific time in cutscene (ms)
 ```
 
 ## Basic Usage

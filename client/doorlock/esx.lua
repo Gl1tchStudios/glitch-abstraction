@@ -1,4 +1,4 @@
--- esx_doorlock Implementation
+-- esx_doorlock
 GlitchLib.Utils.DebugLog('esx_doorlock module loaded')
 
 -- Local cache to store door information
