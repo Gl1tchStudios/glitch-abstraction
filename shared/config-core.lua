@@ -5,6 +5,7 @@ GlitchLib = {
     Inventory = {},    -- Inventory functions
     Progression = {},  -- Progression/XP functions
     DoorLock = {},     -- Door lock functions
+    Cutscene = {},     -- Cutscene functions
     
     -- Server-only components
     
