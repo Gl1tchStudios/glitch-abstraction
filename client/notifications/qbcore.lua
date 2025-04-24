@@ -4,7 +4,6 @@ if not GlitchLib or not GlitchLib.Utils then
     return false
 end
 
--- Initialize notifications namespace
 GlitchLib.Notifications = GlitchLib.Notifications or {}
 
 -- Skip if notification system doesn't match

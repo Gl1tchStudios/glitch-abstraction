@@ -6,17 +6,14 @@ if not GlitchLib or not GlitchLib.Utils then
     return false
 end
 
--- Initialize notifications namespace
 GlitchLib.Notifications = GlitchLib.Notifications or {}
 GlitchLib.Notifications.Ox = GlitchLib.Notifications.Ox or {}
 
--- Skip if notification system doesn't match
 if Config and Config.NotificationSystem and Config.NotificationSystem ~= 'ox' and Config.NotificationSystem ~= 'auto' then
     GlitchLib.Utils.DebugLog('Skipping ox notifications module (using ' .. Config.NotificationSystem .. ')')
     return false
 end
 
--- Check if resource is actually available
 if GetResourceState('ox_lib') ~= 'started' then
     GlitchLib.Utils.DebugLog('ox_lib resource is not available')
     return false
@@ -45,11 +42,10 @@ GlitchLib.Notifications.Ox.Show = function(params)
         sound = params.sound                                -- Sound options
     })
     
-    -- Return a dummy ID for compatibility with other systems
     return params.id or 1
 end
 
--- Main notification function (used when this is the chosen notification system)
+-- Main notification functions
 GlitchLib.Notifications.Show = function(params)
     return GlitchLib.Notifications.Ox.Show(params)
 end

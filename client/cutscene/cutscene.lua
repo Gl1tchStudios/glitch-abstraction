@@ -9,7 +9,6 @@ GlitchLib.Cutscene = GlitchLib.Cutscene or {}
 
 GlitchLib.Utils.DebugLog('Cutscene module loaded')
 
--- Player appearance storage
 local playerAppearance = {}
 
 -- Save player appearance
@@ -17,12 +16,10 @@ GlitchLib.Cutscene.SavePlayerAppearance = function()
     local ped = PlayerPedId()
     
     playerAppearance = {
-        -- Face/Head
         mask = {GetPedDrawableVariation(ped, 1), GetPedTextureVariation(ped, 1), GetPedPaletteVariation(ped, 1)},
         hair = {GetPedDrawableVariation(ped, 2), GetPedTextureVariation(ped, 2), GetPedPaletteVariation(ped, 2)},
         arms = {GetPedDrawableVariation(ped, 3), GetPedTextureVariation(ped, 3), GetPedPaletteVariation(ped, 3)},
         
-        -- Clothing
         pants = {GetPedDrawableVariation(ped, 4), GetPedTextureVariation(ped, 4), GetPedPaletteVariation(ped, 4)},
         bag = {GetPedDrawableVariation(ped, 5), GetPedTextureVariation(ped, 5), GetPedPaletteVariation(ped, 5)},
         feet = {GetPedDrawableVariation(ped, 6), GetPedTextureVariation(ped, 6), GetPedPaletteVariation(ped, 6)},
@@ -31,7 +28,6 @@ GlitchLib.Cutscene.SavePlayerAppearance = function()
         decals = {GetPedDrawableVariation(ped, 10), GetPedTextureVariation(ped, 10), GetPedPaletteVariation(ped, 10)},
         jacket = {GetPedDrawableVariation(ped, 11), GetPedTextureVariation(ped, 11), GetPedPaletteVariation(ped, 11)},
         
-        -- Props
         hat = {GetPedPropIndex(ped, 0), GetPedPropTextureIndex(ped, 0)},
         glasses = {GetPedPropIndex(ped, 1), GetPedPropTextureIndex(ped, 1)},
         ear = {GetPedPropIndex(ped, 2), GetPedPropTextureIndex(ped, 2)},
@@ -51,7 +47,6 @@ GlitchLib.Cutscene.RestorePlayerAppearance = function()
     
     local ped = PlayerPedId()
     
-    -- Restore components
     SetPedComponentVariation(ped, 1, playerAppearance.mask[1], playerAppearance.mask[2], playerAppearance.mask[3])
     SetPedComponentVariation(ped, 2, playerAppearance.hair[1], playerAppearance.hair[2], playerAppearance.hair[3])
     SetPedComponentVariation(ped, 3, playerAppearance.arms[1], playerAppearance.arms[2], playerAppearance.arms[3])
@@ -63,7 +58,6 @@ GlitchLib.Cutscene.RestorePlayerAppearance = function()
     SetPedComponentVariation(ped, 10, playerAppearance.decals[1], playerAppearance.decals[2], playerAppearance.decals[3])
     SetPedComponentVariation(ped, 11, playerAppearance.jacket[1], playerAppearance.jacket[2], playerAppearance.jacket[3])
     
-    -- Restore props
     SetPedPropIndex(ped, 0, playerAppearance.hat[1], playerAppearance.hat[2], true)
     SetPedPropIndex(ped, 1, playerAppearance.glasses[1], playerAppearance.glasses[2], true)
     SetPedPropIndex(ped, 2, playerAppearance.ear[1], playerAppearance.ear[2], true)
@@ -90,10 +84,8 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
         timeoutMs = options.timeoutMs or 10000
     }
     
-    -- Debug output
     GlitchLib.Utils.DebugLog('Playing cutscene: ' .. cutsceneName)
     
-    -- Stop any active cutscene
     if IsCutsceneActive() then
         StopCutsceneImmediately()
     end
@@ -138,25 +130,20 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
         end
     end
     
-    -- Hide player if needed
     if config.hidePlayer then
         NetworkSetEntityInvisibleToNetwork(playerPed, true)
     end
     
-    -- Start the cutscene
     StartCutscene(0)
     
-    -- Wait for MP_1 to exist
     while not (DoesCutsceneEntityExist('MP_1', 0)) do
         Citizen.Wait(0)
     end
     
-    -- Call onStart callback if provided
     if config.onStart then
         config.onStart()
     end
     
-    -- Scene loading optimization
     Citizen.CreateThread(function()
         Citizen.SetTimeout(100, function()
             if IsCutsceneActive() then
@@ -168,21 +155,17 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
     
     -- Handle cutscene appearance updates
     Citizen.CreateThread(function()
-        -- Wait for cutscene to actually start playing
         while not IsCutscenePlaying() do
             Citizen.Wait(0)
-            if not IsCutsceneActive() then return end -- Cutscene was stopped
+            if not IsCutsceneActive() then return end
         end
         
-        -- While the cutscene is playing
         while IsCutscenePlaying() do
             Citizen.Wait(0)
             
-            -- Apply appearance during cutscene if needed
             if config.restoreAppearance then
                 SetCutscenePedComponentVariationFromPed(PlayerPedId(), PlayerPedId(), 1885233650)
                 
-                -- Apply saved appearance
                 if playerAppearance.mask then SetPedComponentVariation(playerPed, 1, playerAppearance.mask[1], playerAppearance.mask[2], playerAppearance.mask[3]) end
                 if playerAppearance.hair then SetPedComponentVariation(playerPed, 2, playerAppearance.hair[1], playerAppearance.hair[2], playerAppearance.hair[3]) end
                 if playerAppearance.arms then SetPedComponentVariation(playerPed, 3, playerAppearance.arms[1], playerAppearance.arms[2], playerAppearance.arms[3]) end
@@ -192,7 +175,6 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
                 if playerAppearance.vest then SetPedComponentVariation(playerPed, 9, playerAppearance.vest[1], playerAppearance.vest[2], playerAppearance.vest[3]) end
                 if playerAppearance.jacket then SetPedComponentVariation(playerPed, 11, playerAppearance.jacket[1], playerAppearance.jacket[2], playerAppearance.jacket[3]) end
                 
-                -- Apply props
                 if playerAppearance.hat then SetPedPropIndex(playerPed, 0, playerAppearance.hat[1], playerAppearance.hat[2], true) end
                 if playerAppearance.glasses then SetPedPropIndex(playerPed, 1, playerAppearance.glasses[1], playerAppearance.glasses[2], true) end
             end
@@ -212,12 +194,12 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
     return true
 end
 
--- Check if a cutscene is currently active
+-- Checks if a cutscene is currently active
 GlitchLib.Cutscene.IsActive = function()
     return IsCutsceneActive()
 end
 
--- Check if a cutscene is currently playing
+-- Checks if a cutscene is currently playing
 GlitchLib.Cutscene.IsPlaying = function()
     return IsCutscenePlaying()
 end
