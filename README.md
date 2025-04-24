@@ -15,9 +15,15 @@ A comprehensive abstraction layer for FiveM that seamlessly integrates multiple 
 - ESX inventory
 
 ### Supported UI Systems
-- ox_lib UI
-- QB UI
-- ESX UI
+- ox_lib
+- QBCore
+- ESX
+
+### Supported Notifications Systems
+- ox_lib
+- QBCore
+- ESX
+- Glitch Notifications
 
 ### Supported Target Systems
 - ox_target

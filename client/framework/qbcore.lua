@@ -1,14 +1,27 @@
-local QBCore = exports['qb-core']:GetCoreObject()
-GlitchLib.Utils.DebugLog('QBCore Client Framework module loaded')
-
--- Player Data
-GlitchLib.Framework.GetPlayerData = function()
-    return QBCore.Functions.GetPlayerData()
+-- QBCore Client Implementation
+if GlitchLib.FrameworkName ~= 'QBCore' then
+    GlitchLib.Utils.DebugLog('Skipping QBCore framework module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+    return false
 end
 
--- Notifications
-GlitchLib.Framework.Notify = function(message, type, duration)
-    QBCore.Functions.Notify(message, type, duration)
+local QBCore = nil
+local success, result = pcall(function()
+    return exports['qb-core']:GetCoreObject()
+end)
+
+if not success or not result then
+    GlitchLib.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore integration')
+    return false
+end
+
+QBCore = result
+GlitchLib.Framework.QBCore = QBCore
+GlitchLib.Framework.Type = 'QBCore'
+GlitchLib.Utils.DebugLog('QBCore framework module loaded')
+
+-- Player data
+GlitchLib.Framework.GetPlayerData = function()
+    return QBCore.Functions.GetPlayerData()
 end
 
 -- Callbacks
@@ -16,33 +29,127 @@ GlitchLib.Framework.TriggerCallback = function(name, cb, ...)
     QBCore.Functions.TriggerCallback(name, cb, ...)
 end
 
--- Player Spawn
+-- Notifications
+GlitchLib.Framework.Notify = function(message, type, duration)
+    if GlitchLib.Notifications and GlitchLib.Notifications.Type then
+        -- Use the notifications system if available
+        GlitchLib.Notifications.Show({
+            description = message,
+            type = type or 'info',
+            duration = duration or 5000
+        })
+    else
+        -- Fallback to QBCore notifications
+        QBCore.Functions.Notify(message, type, duration)
+    end
+end
+
+-- Help notifications
+GlitchLib.Framework.ShowHelpNotification = function(message, thisFrame)
+    if thisFrame == nil then thisFrame = false end
+    AddTextEntry('qbHelpNotification', message)
+    DisplayHelpTextThisFrame('qbHelpNotification', thisFrame)
+end
+
+-- Player functions
 GlitchLib.Framework.SpawnPlayer = function(coords, callback)
-    SetEntityCoords(PlayerPedId(), coords.x, coords.y, coords.z)
-    if callback then callback() end
+    QBCore.Functions.GetPlayerData(function(PlayerData)
+        if PlayerData.metadata["isdead"] or PlayerData.metadata["inlaststand"] then
+            -- Player is dead, handle respawn logic
+            TriggerEvent("hospital:client:Revive")
+            SetTimeout(1000, function()
+                DoScreenFadeOut(500)
+                Wait(1000)
+                SetEntityCoords(PlayerPedId(), coords.x, coords.y, coords.z, false, false, false, false)
+                SetEntityHeading(PlayerPedId(), coords.w or 0.0)
+                Wait(500)
+                DoScreenFadeIn(500)
+                if callback then callback() end
+            end)
+        else
+            -- Player is alive
+            DoScreenFadeOut(500)
+            Wait(1000)
+            SetEntityCoords(PlayerPedId(), coords.x, coords.y, coords.z, false, false, false, false)
+            SetEntityHeading(PlayerPedId(), coords.w or 0.0)
+            Wait(500)
+            DoScreenFadeIn(500)
+            if callback then callback() end
+        end
+    end)
 end
 
--- Draw Text
+-- UI functions
 GlitchLib.Framework.DrawText = function(x, y, text)
-    QBCore.Functions.DrawText(x, y, text)
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextProportional(1)
+    SetTextColour(255, 255, 255, 215)
+    SetTextEntry("STRING")
+    SetTextCentre(true)
+    AddTextComponentString(text)
+    DrawText(x, y)
+    
+    -- Optional background
+    local factor = (string.len(text)) / 370
+    DrawRect(x, y + 0.0125, 0.015 + factor, 0.03, 0, 0, 0, 68)
 end
 
--- Draw 3D Text
+-- 3D text
 GlitchLib.Framework.Draw3DText = function(coords, text)
-    QBCore.Functions.DrawText3D(coords.x, coords.y, coords.z, text)
+    local onScreen, _x, _y = World3dToScreen2d(coords.x, coords.y, coords.z)
+    local pX, pY, pZ = table.unpack(GetGameplayCamCoords())
+
+    SetTextScale(0.35, 0.35)
+    SetTextFont(4)
+    SetTextProportional(1)
+    SetTextColour(255, 255, 255, 215)
+    SetTextEntry("STRING")
+    SetTextCentre(1)
+    AddTextComponentString(text)
+    DrawText(_x, _y)
+    
+    local factor = (string.len(text)) / 370
+    DrawRect(_x, _y + 0.0125, 0.015 + factor, 0.03, 0, 0, 0, 68)
 end
 
--- Get Closest Player
+-- Get closest player
 GlitchLib.Framework.GetClosestPlayer = function()
-    return QBCore.Functions.GetClosestPlayer()
+    local pedCoords = GetEntityCoords(PlayerPedId())
+    local closestPlayers = QBCore.Functions.GetPlayersFromCoords()
+    local closestDistance = -1
+    local closestPlayer = -1
+    
+    for i = 1, #closestPlayers, 1 do
+        if closestPlayers[i] ~= PlayerId() then
+            local targetPed = GetPlayerPed(closestPlayers[i])
+            local dist = #(pedCoords - GetEntityCoords(targetPed))
+
+            if closestDistance == -1 or closestDistance > dist then
+                closestPlayer = closestPlayers[i]
+                closestDistance = dist
+            end
+        end
+    end
+    
+    return closestPlayer, closestDistance
 end
 
--- Get Vehicle Properties
+-- Vehicle functions
 GlitchLib.Framework.GetVehicleProperties = function(vehicle)
-    return QBCore.Functions.GetVehicleProperties(vehicle)
+    if DoesEntityExist(vehicle) then
+        return QBCore.Functions.GetVehicleProperties(vehicle)
+    end
+    return nil
 end
 
--- Set Vehicle Properties
 GlitchLib.Framework.SetVehicleProperties = function(vehicle, props)
-    return QBCore.Functions.SetVehicleProperties(vehicle, props)
+    if DoesEntityExist(vehicle) and props then
+        QBCore.Functions.SetVehicleProperties(vehicle, props)
+        return true
+    end
+    return false
 end
+
+-- Return true to indicate successful initialization
+return true

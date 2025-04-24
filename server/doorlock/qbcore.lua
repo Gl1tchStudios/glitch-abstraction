@@ -1,15 +1,114 @@
 -- qb-doorlock Server
 GlitchLib.Utils.DebugLog('qb-doorlock server module loaded')
 
-local QBCore = exports['qb-core']:GetCoreObject()
+-- Check if the resource is actually available before proceeding
+local function IsResourceAvailable(resourceName)
+    local state = GetResourceState(resourceName)
+    return state == 'started'
+end
+
+-- Early exit if qb-doorlock isn't available
+if not IsResourceAvailable('qb-doorlock') then
+    GlitchLib.Utils.DebugLog('WARNING: qb-doorlock resource is not available')
+    
+    -- Set up placeholder functions
+    GlitchLib.DoorLock.GetDoorState = function(door) return nil end
+    GlitchLib.DoorLock.SetDoorState = function(door, state, source) return false end
+    GlitchLib.DoorLock.PlayerHasAccess = function(source, door) return false end
+    GlitchLib.DoorLock.GetAllDoors = function() return {} end
+    GlitchLib.DoorLock.AddDoor = function(door) return false end
+    GlitchLib.DoorLock.RemoveDoor = function(door) return false end
+    
+    return  -- Exit early
+end
+
+-- Try to initialize QBCore
+local QBCore = nil
+local function initQBCore()
+    if not IsResourceAvailable('qb-core') then
+        return false
+    end
+    
+    local success, result = pcall(function()
+        return exports['qb-core']:GetCoreObject()
+    end)
+    
+    if not success then
+        success, result = pcall(function()
+            return exports['qb-core']:GetSharedObject()
+        end)
+    end
+    
+    if not success then
+        success, result = pcall(function()
+            return exports['qb-core']:getCore()
+        end)
+    end
+    
+    if not success or result == nil then
+        GlitchLib.Utils.DebugLog('ERROR: Failed to initialize QBCore for doorlock - export not found')
+        return false
+    end
+    
+    return result
+end
+
+QBCore = initQBCore()
 
 -- Cache for door data
 local doorCache = {}
 
+-- Try to get door data with multiple possible export names
+local function getDoorData()
+    -- Try different export names that qb-doorlock might use
+    local exportNames = {
+        'getDoorStateTable', 
+        'GetDoorStateTable',
+        'getDoors',
+        'GetDoors',
+        'getAllDoors',
+        'getDoorList'
+    }
+    
+    for _, exportName in ipairs(exportNames) do
+        local success, result = pcall(function()
+            return exports['qb-doorlock'][exportName]()
+        end)
+        
+        if success and result then
+            GlitchLib.Utils.DebugLog('Successfully got door data using export: ' .. exportName)
+            return result
+        end
+    end
+    
+    -- If exports fail, try to access door data through events
+    local doorData = nil
+    RegisterNetEvent('qb-doorlock:server:getDoors')
+    AddEventHandler('qb-doorlock:server:getDoors', function(doors)
+        doorData = doors
+    end)
+    
+    TriggerEvent('qb-doorlock:server:requestDoors')
+    
+    -- Wait briefly for event response
+    local startTime = os.time()
+    while doorData == nil and os.time() - startTime < 3 do
+        Wait(100)
+    end
+    
+    if doorData then
+        GlitchLib.Utils.DebugLog('Successfully got door data using event')
+        return doorData
+    end
+    
+    GlitchLib.Utils.DebugLog('WARNING: Could not get door data from qb-doorlock')
+    return {}
+end
+
 -- Initialize doorCache on resource start
 CreateThread(function()
     Wait(1000) -- Wait for doors to be loaded
-    doorCache = exports['qb-doorlock']:getDoorStateTable()
+    doorCache = getDoorData()
 end)
 
 -- Get door state
@@ -64,7 +163,7 @@ GlitchLib.DoorLock.PlayerHasAccess = function(source, door)
     end
     
     if doorId and doorCache[doorId] then
-        local Player = QBCore.Functions.GetPlayer(source)
+        local Player = QBCore and QBCore.Functions.GetPlayer(source)
         if not Player then return false end
         
         local doorData = doorCache[doorId]

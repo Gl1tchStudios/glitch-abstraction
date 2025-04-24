@@ -1,6 +1,22 @@
-GlitchLib.Utils.DebugLog('QB UI module loaded')
+-- First check if we should load this module
+if GlitchLib.FrameworkName ~= 'QBCore' then
+    GlitchLib.Utils.DebugLog('Skipping QBCore UI module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+    return false
+end
 
-local QBCore = exports['qb-core']:GetCoreObject()
+-- Safe way to get QBCore
+local QBCore = nil
+local success, result = pcall(function()
+    return exports['qb-core']:GetCoreObject()
+end)
+
+if not success or not result then
+    GlitchLib.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore UI')
+    return false
+end
+
+QBCore = result
+GlitchLib.Utils.DebugLog('QBCore UI module loaded')
 
 -- Input dialog (using qb-input)
 GlitchLib.UI.Input = function(header, inputs)

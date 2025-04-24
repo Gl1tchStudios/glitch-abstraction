@@ -1,10 +1,38 @@
 -- QB Inventory
 GlitchLib.Utils.DebugLog('QB Inventory module loaded')
 
-local QBCore = exports['qb-core']:GetCoreObject()
+local QBCore = nil
+
+local function initQBCore()
+    local success, result = pcall(function()
+        return exports['qb-core']:GetCoreObject()
+    end)
+    
+    if not success then
+        success, result = pcall(function()
+            return exports['qb-core']:GetSharedObject()
+        end)
+    end
+    
+    if not success then
+        success, result = pcall(function()
+            return exports['qb-core']:getCore()
+        end)
+    end
+    
+    if not success or result == nil then
+        GlitchLib.Utils.DebugLog('ERROR: Failed to initialize QBCore for inventory - export not found')
+        return false
+    end
+    
+    return result
+end
+
+QBCore = initQBCore()
 
 -- Item Management
 GlitchLib.Inventory.AddItem = function(source, item, count, metadata)
+    if not QBCore then return false end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player then
         return Player.Functions.AddItem(item, count, nil, metadata)
@@ -13,6 +41,7 @@ GlitchLib.Inventory.AddItem = function(source, item, count, metadata)
 end
 
 GlitchLib.Inventory.RemoveItem = function(source, item, count, slot, metadata)
+    if not QBCore then return false end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player then
         return Player.Functions.RemoveItem(item, count, slot, metadata)
@@ -21,6 +50,7 @@ GlitchLib.Inventory.RemoveItem = function(source, item, count, slot, metadata)
 end
 
 GlitchLib.Inventory.GetItem = function(source, item, metadata)
+    if not QBCore then return nil end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player then
         local items = Player.Functions.GetItemsByName(item)
@@ -38,6 +68,7 @@ GlitchLib.Inventory.GetItem = function(source, item, metadata)
 end
 
 GlitchLib.Inventory.GetItemCount = function(source, item, metadata)
+    if not QBCore then return 0 end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player then
         if metadata then
@@ -56,6 +87,7 @@ GlitchLib.Inventory.GetItemCount = function(source, item, metadata)
 end
 
 GlitchLib.Inventory.CanCarryItem = function(source, item, count)
+    if not QBCore then return false end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player then
         return Player.Functions.CanCarryItem(item, count)
@@ -64,6 +96,7 @@ GlitchLib.Inventory.CanCarryItem = function(source, item, count)
 end
 
 GlitchLib.Inventory.CanSwapItem = function(source, item, count, toSlot)
+    if not QBCore then return false end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player then
         return Player.Functions.CanCarryItem(item, count) -- QB doesn't have a direct swap check
@@ -72,6 +105,7 @@ GlitchLib.Inventory.CanSwapItem = function(source, item, count, toSlot)
 end
 
 GlitchLib.Inventory.SetInventory = function(source, items)
+    if not QBCore then return false end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player and items then
         Player.Functions.SetInventory(items)
@@ -81,6 +115,7 @@ GlitchLib.Inventory.SetInventory = function(source, items)
 end
 
 GlitchLib.Inventory.ClearInventory = function(source)
+    if not QBCore then return false end
     local Player = QBCore.Functions.GetPlayer(source)
     if Player then
         Player.Functions.ClearInventory()

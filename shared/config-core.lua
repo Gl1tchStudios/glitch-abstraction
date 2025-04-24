@@ -1,3 +1,4 @@
+-- Global initialization - this must run before any other files
 GlitchLib = {
     Framework = {},      -- Framework functions
     UI = {},             -- UI functions
@@ -14,13 +15,53 @@ GlitchLib = {
     
     Utils = {},          -- Utility functions
     
-    IsReady = false,     -- Whether the library is initialized
-    Debug = Config.Debug
+    IsReady = false      -- Whether the library is initialized
 }
 
-function GlitchLib.Utils.DebugLog(message)
-    if GlitchLib.Debug then
-        print('[GlitchLib] ' .. tostring(message))
+if not Config then
+    print('^1[CRITICAL ERROR] Config not initialized before config-core.lua^7')
+    Config = {
+        Debug = true,
+        Framework = {
+            {name = 'ESX', resourceName = 'es_extended'},
+            {name = 'QBCore', resourceName = 'qb-core'}
+        },
+        Inventory = {
+            {name = 'ox', resourceName = 'ox_inventory'},
+            {name = 'qb', resourceName = 'qb-inventory'},
+            {name = 'esx', resourceName = 'es_extended'}
+        },
+        Target = {
+            {name = 'ox', resourceName = 'ox_target'},
+            {name = 'qb', resourceName = 'qb-target'},
+            {name = 'esx', resourceName = 'bt-target'}
+        },
+        DoorLock = {
+            {name = 'ox', resourceName = 'ox_doorlock'},
+            {name = 'qb', resourceName = 'qb-doorlock'},
+            {name = 'esx', resourceName = 'esx_doorlock'}
+        },
+        Notifications = {
+            {name = 'glitch', resourceName = 'glitch-notifications'},
+            {name = 'ox', resourceName = 'ox_lib'},
+            {name = 'qb', resourceName = 'qb-core'},
+            {name = 'esx', resourceName = 'es_extended'}
+        },
+        UI = {
+            {name = 'ox', resourceName = 'ox_lib'},
+            {name = 'qb', resourceName = 'qb-core'},
+            {name = 'esx', resourceName = 'es_extended'}
+        },
+        UISystem = 'auto',
+        NotificationSystem = 'auto',
+        UseFramework = 'auto'
+    }
+end
+
+-- Add debug utility function so it's available immediately
+GlitchLib.Utils.DebugLog = function(message)
+    if Config and Config.Debug then
+        print('[GlitchLib] ' .. message)
     end
 end
 
