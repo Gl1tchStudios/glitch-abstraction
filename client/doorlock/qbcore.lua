@@ -1,5 +1,26 @@
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading QBCore doorlock module^7")
+    return false
+end
+
+-- Skip if doorlock system doesn't match
+if Config and Config.DoorlockSystem and Config.DoorlockSystem ~= 'qb' and Config.DoorlockSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping QBCore doorlock module (using ' .. Config.DoorlockSystem .. ')')
+    return false
+end
+
+-- Check if resource is actually available
+if GetResourceState('qb-doorlock') ~= 'started' then
+    GlitchLib.Utils.DebugLog('qb-doorlock resource is not available')
+    return false
+end
+
+-- Initialize doorlock namespace
+GlitchLib.DoorLock = GlitchLib.DoorLock or {}
+
 -- qb-doorlock
-GlitchLib.Utils.DebugLog('qb-doorlock module loaded')
+GlitchLib.Utils.DebugLog('QBCore doorlock module loaded')
 
 -- Local cache for QBCore door information
 local doorCache = {}

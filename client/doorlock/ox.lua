@@ -1,11 +1,25 @@
-if GlitchLib.Config and GlitchLib.Config.UseDoorsSystem ~= 'ox' then
-    GlitchLib.Utils.DebugLog('Skipping ox_doorlock module (using ' .. (GlitchLib.Config.UseDoorsSystem or 'unknown') .. ')')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading ox_doorlock module^7")
     return false
 end
 
-GlitchLib.Utils.DebugLog('ox_doorlock module loaded')
+-- Skip if doorlock system doesn't match
+if Config and Config.DoorlockSystem and Config.DoorlockSystem ~= 'ox' and Config.DoorlockSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping ox_doorlock module (using ' .. Config.DoorlockSystem .. ')')
+    return false
+end
 
+-- Check if resource is actually available
+if GetResourceState('ox_doorlock') ~= 'started' then
+    GlitchLib.Utils.DebugLog('ox_doorlock resource is not available')
+    return false
+end
+
+-- Initialize doorlock namespace
 GlitchLib.DoorLock = GlitchLib.DoorLock or {}
+
+GlitchLib.Utils.DebugLog('ox_doorlock module loaded')
 
 -- Check if exports exist before using them
 local hasExport = function(resource, exportName)

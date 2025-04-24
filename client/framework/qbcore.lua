@@ -1,9 +1,25 @@
--- QBCore Client Implementation
-if GlitchLib.FrameworkName ~= 'QBCore' then
-    GlitchLib.Utils.DebugLog('Skipping QBCore framework module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading QBCore framework module^7")
     return false
 end
 
+-- Skip if framework doesn't match
+if GlitchLib.FrameworkName and GlitchLib.FrameworkName ~= 'QBCore' then
+    GlitchLib.Utils.DebugLog('Skipping QBCore module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+    return false
+end
+
+-- Check if resource is actually available
+if GetResourceState('qb-core') ~= 'started' then
+    GlitchLib.Utils.DebugLog('qb-core resource is not available')
+    return false
+end
+
+-- Initialize framework modules
+GlitchLib.Framework = GlitchLib.Framework or {}
+
+-- QBCore Client Implementation
 local QBCore = nil
 local success, result = pcall(function()
     return exports['qb-core']:GetCoreObject()

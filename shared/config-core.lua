@@ -1,5 +1,5 @@
--- Global initialization - this must run before any other files
-GlitchLib = {
+-- Core initialization file
+_G.GlitchLib = {
     Framework = {},      -- Framework functions
     UI = {},             -- UI functions
     Target = {},         -- Target functions
@@ -18,9 +18,9 @@ GlitchLib = {
     IsReady = false      -- Whether the library is initialized
 }
 
-if not Config then
-    print('^1[CRITICAL ERROR] Config not initialized before config-core.lua^7')
-    Config = {
+-- Initialize Config if not already done
+if not _G.Config then
+    _G.Config = {
         Debug = true,
         Framework = {
             {name = 'ESX', resourceName = 'es_extended'},
@@ -29,31 +29,29 @@ if not Config then
         Inventory = {
             {name = 'ox', resourceName = 'ox_inventory'},
             {name = 'qb', resourceName = 'qb-inventory'},
-            {name = 'esx', resourceName = 'es_extended'}
+            {name = 'esx', resourceName = 'es_extended'},
         },
         Target = {
             {name = 'ox', resourceName = 'ox_target'},
             {name = 'qb', resourceName = 'qb-target'},
-            {name = 'esx', resourceName = 'bt-target'}
+            {name = 'esx', resourceName = 'bt-target'},
         },
         DoorLock = {
             {name = 'ox', resourceName = 'ox_doorlock'},
             {name = 'qb', resourceName = 'qb-doorlock'},
-            {name = 'esx', resourceName = 'esx_doorlock'}
+            {name = 'esx', resourceName = 'esx_doorlock'},
         },
         Notifications = {
             {name = 'glitch', resourceName = 'glitch-notifications'},
             {name = 'ox', resourceName = 'ox_lib'},
             {name = 'qb', resourceName = 'qb-core'},
-            {name = 'esx', resourceName = 'es_extended'}
+            {name = 'esx', resourceName = 'es_extended'},
         },
         UI = {
             {name = 'ox', resourceName = 'ox_lib'},
             {name = 'qb', resourceName = 'qb-core'},
-            {name = 'esx', resourceName = 'es_extended'}
+            {name = 'esx', resourceName = 'es_extended'},
         },
-        UISystem = 'auto',
-        NotificationSystem = 'auto',
         UseFramework = 'auto'
     }
 end
@@ -64,5 +62,3 @@ GlitchLib.Utils.DebugLog = function(message)
         print('[GlitchLib] ' .. message)
     end
 end
-
-_G.GlitchLib = GlitchLib

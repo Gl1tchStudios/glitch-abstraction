@@ -1,49 +1,39 @@
--- ESX UI Module
-if GlitchLib and GlitchLib.FrameworkName and GlitchLib.FrameworkName ~= 'ESX' then
-    GlitchLib.Utils.DebugLog('Skipping ESX UI module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading ESX framework module^7")
     return false
 end
 
--- Safe way to get ESX
+-- Skip if framework doesn't match
+if GlitchLib.FrameworkName and GlitchLib.FrameworkName ~= 'ESX' then
+    GlitchLib.Utils.DebugLog('Skipping ESX module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+    return false
+end
+
+-- Check if resource is actually available
+if GetResourceState('es_extended') ~= 'started' then
+    GlitchLib.Utils.DebugLog('es_extended resource is not available')
+    return false
+end
+
+-- Initialize framework modules
+GlitchLib.Framework = GlitchLib.Framework or {}
+
+-- ESX Client Implementation
 local ESX = nil
 local success, result = pcall(function()
     return exports['es_extended']:getSharedObject()
 end)
 
-if not success or result == nil then
-    GlitchLib.Utils.DebugLog('Failed to get ESX shared object')
-    return false
-end
-
-ESX = result
-
-if GlitchLib.FrameworkName ~= 'ESX' then
-    GlitchLib.Utils.DebugLog('Skipping ESX framework module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
-    return false
-end
-
-local success, result = pcall(function()
-    return exports['es_extended']:getSharedObject()
-end)
-
 if not success or not result then
-    -- Try the event method as fallback
-    Citizen.CreateThread(function()
-        while ESX == nil do
-            TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-            Citizen.Wait(0)
-        end
-        GlitchLib.Framework.ESX = ESX
-        GlitchLib.Framework.Type = 'ESX'
-        GlitchLib.Utils.DebugLog('ESX framework module loaded (via event)')
-    end)
-    return true
+    GlitchLib.Utils.DebugLog('WARNING: Failed to get ESX object, skipping ESX integration')
+    return false
 end
 
 ESX = result
 GlitchLib.Framework.ESX = ESX
 GlitchLib.Framework.Type = 'ESX'
-GlitchLib.Utils.DebugLog('ESX framework module loaded (via export)')
+GlitchLib.Utils.DebugLog('ESX framework module loaded')
 
 -- Player data
 GlitchLib.Framework.GetPlayerData = function()

@@ -1,5 +1,14 @@
--- OX Inventory Client Module
-GlitchLib.Utils.DebugLog('Loading ox_inventory client module')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading ox_inventory module^7")
+    return false
+end
+
+-- Skip if inventory system doesn't match
+if Config and Config.InventorySystem and Config.InventorySystem ~= 'ox' and Config.InventorySystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping ox_inventory module (using ' .. Config.InventorySystem .. ')')
+    return false
+end
 
 -- Check if resource is actually available
 if GetResourceState('ox_inventory') ~= 'started' then
@@ -7,7 +16,7 @@ if GetResourceState('ox_inventory') ~= 'started' then
     return false
 end
 
--- Ensure inventory namespace exists
+-- Initialize inventory namespace
 GlitchLib.Inventory = GlitchLib.Inventory or {}
 
 -- Basic inventory functions

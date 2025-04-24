@@ -1,6 +1,16 @@
 -- QBCore Inventory Client Module
 
-GlitchLib.Utils.DebugLog('Loading qb-inventory client module')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading qb-inventory module^7")
+    return false
+end
+
+-- Skip if inventory system doesn't match
+if Config and Config.InventorySystem and Config.InventorySystem ~= 'qb' and Config.InventorySystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping qb-inventory module (using ' .. Config.InventorySystem .. ')')
+    return false
+end
 
 -- Check if resource is actually available
 if GetResourceState('qb-inventory') ~= 'started' then
@@ -8,8 +18,10 @@ if GetResourceState('qb-inventory') ~= 'started' then
     return false
 end
 
--- Ensure inventory namespace exists
+-- Initialize inventory namespace
 GlitchLib.Inventory = GlitchLib.Inventory or {}
+
+GlitchLib.Utils.DebugLog('Loading qb-inventory client module')
 
 -- Check if player has an item (both single item and multiple items)
 GlitchLib.Inventory.HasItem = function(items, amount)

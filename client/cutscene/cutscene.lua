@@ -1,3 +1,12 @@
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading cutscene module^7")
+    return false
+end
+
+-- Initialize cutscene namespace
+GlitchLib.Cutscene = GlitchLib.Cutscene or {}
+
 GlitchLib.Utils.DebugLog('Cutscene module loaded')
 
 -- Player appearance storage

@@ -1,3 +1,12 @@
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading scaleform module^7")
+    return false
+end
+
+-- Initialize scaleform namespace
+GlitchLib.Scaleform = GlitchLib.Scaleform or {}
+
 -- Scaleform
 GlitchLib.Utils.DebugLog('Scaleform module loaded')
 

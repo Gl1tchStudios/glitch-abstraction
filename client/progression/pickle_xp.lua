@@ -1,3 +1,26 @@
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading pickle_xp progression module^7")
+    return false
+end
+
+-- Initialize progression namespace
+GlitchLib.Progression = GlitchLib.Progression or {}
+
+-- Skip if XP system doesn't match
+if Config and Config.xpSystem and Config.xpSystem ~= 'pickle_xp' then
+    GlitchLib.Utils.DebugLog('Skipping pickle_xp module (using ' .. Config.xpSystem .. ' instead)')
+    return false
+end
+
+-- Check if resource is actually available
+if GetResourceState('pickle_xp') ~= 'started' then
+    GlitchLib.Utils.DebugLog('pickle_xp resource is not available')
+    return false
+end
+
+GlitchLib.Utils.DebugLog('pickle_xp progression module loaded')
+
 -- pickle_xp Client
 GlitchLib.Utils.DebugLog('pickle_xp client module loaded')
 

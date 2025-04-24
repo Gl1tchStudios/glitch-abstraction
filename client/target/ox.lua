@@ -1,3 +1,24 @@
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading ox_target module^7")
+    return false
+end
+
+-- Initialize target namespace
+GlitchLib.Target = GlitchLib.Target or {}
+
+-- Skip if target system doesn't match
+if Config and Config.TargetSystem and Config.TargetSystem ~= 'ox' and Config.TargetSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping ox_target module (using ' .. Config.TargetSystem .. ')')
+    return false
+end
+
+-- Check if resource is actually available
+if GetResourceState('ox_target') ~= 'started' then
+    GlitchLib.Utils.DebugLog('ox_target resource is not available')
+    return false
+end
+
 GlitchLib.Utils.DebugLog('ox_target module loaded')
 
 -- Add a target entity

@@ -1,18 +1,25 @@
-if Config.NotificationSystem ~= 'auto' and Config.NotificationSystem ~= 'glitch' then
-    GlitchLib.Utils.DebugLog('Skipping glitch notifications (using ' .. Config.NotificationSystem .. ' instead)')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading QBCore notifications module^7")
+    return false
+end
+
+-- Initialize notifications namespace
+GlitchLib.Notifications = GlitchLib.Notifications or {}
+
+-- Skip if notification system doesn't match
+if Config and Config.NotificationSystem and Config.NotificationSystem ~= 'qb' and Config.NotificationSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping QBCore notifications module (using ' .. Config.NotificationSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
-if GetResourceState('glitch-notifications') ~= 'started' then
-    GlitchLib.Utils.DebugLog('glitch-notifications resource is not available')
+if GetResourceState('qb-core') ~= 'started' then
+    GlitchLib.Utils.DebugLog('qb-core resource is not available')
     return false
 end
 
-if GlitchLib.FrameworkName ~= 'QBCore' then
-    GlitchLib.Utils.DebugLog('Skipping QBCore notifications module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
-    return false
-end
+GlitchLib.Utils.DebugLog('QBCore notifications module loaded')
 
 -- Safe way to get QBCore
 local QBCore = nil
@@ -28,7 +35,6 @@ end
 QBCore = result
 
 -- QBCore Notifications Implementation
-GlitchLib.Utils.DebugLog('QBCore notifications module loaded')
 
 -- Track notification IDs for QBCore (which doesn't natively support IDs)
 local activeQBNotifications = {}

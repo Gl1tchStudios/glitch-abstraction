@@ -1,18 +1,25 @@
-if Config.NotificationSystem ~= 'auto' and Config.NotificationSystem ~= 'glitch' then
-    GlitchLib.Utils.DebugLog('Skipping glitch notifications (using ' .. Config.NotificationSystem .. ' instead)')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading ESX notifications module^7")
+    return false
+end
+
+-- Initialize notifications namespace
+GlitchLib.Notifications = GlitchLib.Notifications or {}
+
+-- Skip if notification system doesn't match
+if Config and Config.NotificationSystem and Config.NotificationSystem ~= 'esx' and Config.NotificationSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping ESX notifications module (using ' .. Config.NotificationSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
-if GetResourceState('glitch-notifications') ~= 'started' then
-    GlitchLib.Utils.DebugLog('glitch-notifications resource is not available')
+if GetResourceState('es_extended') ~= 'started' then
+    GlitchLib.Utils.DebugLog('es_extended resource is not available')
     return false
 end
 
-if GlitchLib.FrameworkName ~= 'ESX' then
-    GlitchLib.Utils.DebugLog('Skipping ESX notifications module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
-    return false
-end
+GlitchLib.Utils.DebugLog('ESX notifications module loaded')
 
 -- Safe way to get ESX
 local ESX = nil
@@ -26,8 +33,6 @@ local nextESXNotificationId = 1
 
 -- Define the initialization function BEFORE calling it
 local function InitializeESXNotifications(eSXObj)
-    GlitchLib.Utils.DebugLog('ESX notifications module loaded')
-    
     -- Basic notification
     GlitchLib.Notifications.Show = function(params)
         eSXObj.ShowNotification(params.description or params.message or params.title)

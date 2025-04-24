@@ -1,3 +1,27 @@
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading bt-target module^7")
+    return false
+end
+
+-- Initialize target namespace
+GlitchLib.Target = GlitchLib.Target or {}
+
+-- Skip if target system doesn't match
+if Config and Config.TargetSystem and Config.TargetSystem ~= 'esx' and Config.TargetSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping bt-target module (using ' .. Config.TargetSystem .. ')')
+    return false
+end
+
+-- Check if resource is actually available
+local targetResource = 'bt-target' -- or 'qtarget' depending on your ESX setup
+if GetResourceState(targetResource) ~= 'started' then
+    GlitchLib.Utils.DebugLog(targetResource .. ' resource is not available')
+    return false
+end
+
+GlitchLib.Utils.DebugLog('ESX target module loaded')
+
 GlitchLib.Utils.DebugLog('bt-target module loaded')
 
 -- Add a target entity

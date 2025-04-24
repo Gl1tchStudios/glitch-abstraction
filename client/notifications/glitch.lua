@@ -1,14 +1,19 @@
--- Glitch Notifications
-GlitchLib.Utils.DebugLog('Loading Glitch notifications module')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading Glitch notifications module^7")
+    return false
+end
 
--- Create the Glitch sub-namespace
-GlitchLib.Notifications.Glitch = {}
+-- Initialize notifications namespace
+GlitchLib.Notifications = GlitchLib.Notifications or {}
+GlitchLib.Notifications.Glitch = GlitchLib.Notifications.Glitch or {}
 
 -- Initialize the available state
 local glitchNotificationsAvailable = GetResourceState('glitch-notifications') == 'started'
 
 if not glitchNotificationsAvailable then
-    GlitchLib.Utils.DebugLog('Glitch notification resource is not started')
+    GlitchLib.Utils.DebugLog('glitch-notifications resource is not available')
+    -- Don't return false, just mark as unavailable
 else
     GlitchLib.Utils.DebugLog('Glitch notifications module loaded')
 end

@@ -61,62 +61,41 @@ GlitchLib.UI.HideTextUI = function()
     exports['ox_lib']:hideTextUI()
 end
 
--- Alert dialog that works with ox_target callbacks [YAYAYA WOO!!!]
+-- Alert dialog that works with ox_target callbacks
 GlitchLib.UI.Alert = function(titleOrParams, message, typeParam, icon)
-    local p = promise.new()
-    
-    CreateThread(function()
-        Wait(10)
-        
-        local params
-        if type(titleOrParams) == 'table' then
-            params = {
-                header = titleOrParams.header or titleOrParams.title,
-                content = titleOrParams.content or titleOrParams.message or titleOrParams.description,
-                centered = titleOrParams.centered ~= false,
-                cancel = titleOrParams.cancel ~= false,
-                type = titleOrParams.type or 'info',
-                icon = titleOrParams.icon
-            }
-        else
-            params = {
-                header = titleOrParams,
-                content = message,
-                centered = true,
-                cancel = true,
-                type = typeParam or 'info',
-                icon = icon
-            }
-        end
-        
-        local success, result
-        success, result = pcall(function()
-            return exports['ox_lib']:alertDialog(params)
-        end)
-        
-        if not success then
-            print("GlitchLib Error: Alert Dialog failed -", result)
-            p:resolve("error")
-            return
-        end
-        
-        p:resolve(result)
-    end)
-    
-    local success, result = pcall(function()
-        return Citizen.Await(p)
-    end)
-    
-    if not success then
-        print("GlitchLib Error: Await failed, returning nil -", result)
-        return nil
+    local params
+    if type(titleOrParams) == 'table' then
+        params = {
+            header = titleOrParams.header or titleOrParams.title,
+            content = titleOrParams.content or titleOrParams.message or titleOrParams.description,
+            centered = titleOrParams.centered ~= false,
+            cancel = titleOrParams.cancel ~= false,
+            type = titleOrParams.type or 'info',
+            icon = titleOrParams.icon
+        }
+    else
+        params = {
+            header = titleOrParams,
+            content = message,
+            centered = true,
+            cancel = true,
+            type = typeParam or 'info',
+            icon = icon
+        }
     end
     
-    return result
+
+    if exports and exports['ox_lib'] then
+        local result = exports['ox_lib']:alertDialog(params)
+        return result
+    else
+        GlitchLib.Utils.DebugLog('Alert dialog failed - ox_lib not found')
+        return "error" 
+    end
 end
 
--- Create alias for direct access
 GlitchLib.alertDialog = GlitchLib.UI.Alert
+GlitchLib.Alert = GlitchLib.UI.Alert
 
 GlitchLib.Utils.DebugLog('ox_lib UI module loaded')
 return true

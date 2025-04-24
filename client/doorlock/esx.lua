@@ -1,5 +1,25 @@
--- esx_doorlock
-GlitchLib.Utils.DebugLog('esx_doorlock module loaded')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading ESX doorlock module^7")
+    return false
+end
+
+-- Skip if doorlock system doesn't match
+if Config and Config.DoorlockSystem and Config.DoorlockSystem ~= 'esx' and Config.DoorlockSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping ESX doorlock module (using ' .. Config.DoorlockSystem .. ')')
+    return false
+end
+
+-- Check if resource is actually available
+if GetResourceState('esx_doorlock') ~= 'started' then
+    GlitchLib.Utils.DebugLog('esx_doorlock resource is not available')
+    return false
+end
+
+-- Initialize doorlock namespace
+GlitchLib.DoorLock = GlitchLib.DoorLock or {}
+
+GlitchLib.Utils.DebugLog('ESX doorlock module loaded')
 
 -- Local cache to store door information
 local doorCache = {}

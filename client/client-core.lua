@@ -1,3 +1,25 @@
+-- Ensure GlitchLib is initialized
+if not GlitchLib then
+    print("^1[CRITICAL ERROR] GlitchLib not initialized before client-core.lua^7")
+    GlitchLib = {
+        Framework = {},
+        UI = {},
+        Target = {},
+        Inventory = {},
+        Progression = {},
+        DoorLock = {},
+        Cutscene = {},
+        Scaleform = {},
+        Notifications = {},
+        Utils = {},
+        IsReady = false
+    }
+    
+    GlitchLib.Utils.DebugLog = function(message)
+        print('[GlitchLib] ' .. message)
+    end
+end
+
 local hasInitialized = false
 
 local function InitializeLibrary()

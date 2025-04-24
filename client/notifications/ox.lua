@@ -1,7 +1,17 @@
 -- ox_lib notification module for GlitchLib
 
-if Config.NotificationSystem ~= 'auto' and Config.NotificationSystem ~= 'ox' then
-    GlitchLib.Utils.DebugLog('Skipping ox notifications (using ' .. Config.NotificationSystem .. ' instead)')
+-- Safety check for GlitchLib
+if not GlitchLib or not GlitchLib.Utils then
+    print("^1[ERROR] GlitchLib not initialized before loading ox notifications module^7")
+    return false
+end
+
+-- Initialize notifications namespace
+GlitchLib.Notifications = GlitchLib.Notifications or {}
+
+-- Skip if notification system doesn't match
+if Config and Config.NotificationSystem and Config.NotificationSystem ~= 'ox' and Config.NotificationSystem ~= 'auto' then
+    GlitchLib.Utils.DebugLog('Skipping ox notifications module (using ' .. Config.NotificationSystem .. ')')
     return false
 end
 
@@ -68,5 +78,5 @@ GlitchLib.UI.Notify = function(params)
     GlitchLib.Notifications.Show(params)
 end
 
-GlitchLib.Utils.DebugLog("ox_lib notification module loaded")
+GlitchLib.Utils.DebugLog('ox_lib notifications module loaded')
 return true
