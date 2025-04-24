@@ -1,17 +1,23 @@
-GlitchLib.Utils.DebugLog('ox_lib UI module loaded')
+-- ox_lib UI module for GlitchLib
+
+-- Check if resource is actually available
+if GetResourceState('ox_lib') ~= 'started' then
+    GlitchLib.Utils.DebugLog('ox_lib resource is not available')
+    return false
+end
 
 -- Input dialog
 GlitchLib.UI.Input = function(header, inputs)
-    return lib.inputDialog(header, inputs)
+    return exports['ox_lib']:inputDialog(header, inputs)
 end
 
 -- Context menu (right-click style menu)
 GlitchLib.UI.ContextMenu = function(id, title, options, position)
-    return lib.showContext(id)
+    return exports['ox_lib']:showContext(id)
 end
 
 GlitchLib.UI.CreateContextMenu = function(id, title, options)
-    return lib.registerContext({
+    return exports['ox_lib']:registerContext({
         id = id,
         title = title,
         options = options
@@ -20,7 +26,7 @@ end
 
 -- Progress bar
 GlitchLib.UI.ProgressBar = function(params)
-    return lib.progressBar({
+    return exports['ox_lib']:progressBar({
         duration = params.duration,
         label = params.label,
         useWhileDead = params.useWhileDead or false,
@@ -34,7 +40,7 @@ end
 
 -- Progress Circle (if enabled)
 GlitchLib.UI.ProgressCircle = function(params)
-    return lib.progressCircle({
+    return exports['ox_lib']:progressCircle({
         duration = params.duration,
         label = params.label,
         position = params.position or 'bottom',
@@ -48,21 +54,69 @@ end
 
 -- Text UI (persistent text display)
 GlitchLib.UI.ShowTextUI = function(message, options)
-    lib.showTextUI(message, options)
+    exports['ox_lib']:showTextUI(message, options)
 end
 
 GlitchLib.UI.HideTextUI = function()
-    lib.hideTextUI()
+    exports['ox_lib']:hideTextUI()
 end
 
--- Alert dialog
-GlitchLib.UI.Alert = function(title, message, type, icon)
-    return lib.alertDialog({
-        header = title,
-        content = message,
-        centered = true,
-        cancel = true,
-        type = type or 'info',
-        icon = icon
-    })
+-- Alert dialog that works with ox_target callbacks [YAYAYA WOO!!!]
+GlitchLib.UI.Alert = function(titleOrParams, message, typeParam, icon)
+    local p = promise.new()
+    
+    CreateThread(function()
+        Wait(10)
+        
+        local params
+        if type(titleOrParams) == 'table' then
+            params = {
+                header = titleOrParams.header or titleOrParams.title,
+                content = titleOrParams.content or titleOrParams.message or titleOrParams.description,
+                centered = titleOrParams.centered ~= false,
+                cancel = titleOrParams.cancel ~= false,
+                type = titleOrParams.type or 'info',
+                icon = titleOrParams.icon
+            }
+        else
+            params = {
+                header = titleOrParams,
+                content = message,
+                centered = true,
+                cancel = true,
+                type = typeParam or 'info',
+                icon = icon
+            }
+        end
+        
+        local success, result
+        success, result = pcall(function()
+            return exports['ox_lib']:alertDialog(params)
+        end)
+        
+        if not success then
+            print("GlitchLib Error: Alert Dialog failed -", result)
+            p:resolve("error")
+            return
+        end
+        
+        p:resolve(result)
+    end)
+    
+    local success, result = pcall(function()
+        return Citizen.Await(p)
+    end)
+    
+    if not success then
+        print("GlitchLib Error: Await failed, returning nil -", result)
+        return nil
+    end
+    
+    return result
 end
+
+-- Create alias for direct access
+GlitchLib.alertDialog = GlitchLib.UI.Alert
+
+GlitchLib.Utils.DebugLog('ox_lib UI module loaded')
+return true

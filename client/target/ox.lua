@@ -52,3 +52,82 @@ end
 GlitchLib.Target.AddGlobalObject = function(options)
     exports.ox_target:addGlobalObject(options)
 end
+
+-- Enable/disable the targeting system
+GlitchLib.Target.DisableTargeting = function(state)
+    exports.ox_target:disableTargeting(state)
+end
+
+-- Add a global option that appears for all entities
+GlitchLib.Target.AddGlobalOption = function(options)
+    return exports.ox_target:addGlobalOption(options)
+end
+
+-- Remove global options
+GlitchLib.Target.RemoveGlobalOption = function(optionNames)
+    exports.ox_target:removeGlobalOption(optionNames)
+end
+
+-- Add target for all peds (except players)
+GlitchLib.Target.AddGlobalPed = function(options)
+    exports.ox_target:addGlobalPed(options)
+end
+
+-- Remove target for all peds
+GlitchLib.Target.RemoveGlobalPed = function(optionNames)
+    exports.ox_target:removeGlobalPed(optionNames)
+end
+
+-- Remove target for all players
+GlitchLib.Target.RemoveGlobalPlayer = function(optionNames)
+    exports.ox_target:removeGlobalPlayer(optionNames)
+end
+
+-- Remove target for all vehicles
+GlitchLib.Target.RemoveGlobalVehicle = function(optionNames)
+    exports.ox_target:removeGlobalVehicle(optionNames)
+end
+
+-- Remove target for all objects
+GlitchLib.Target.RemoveGlobalObject = function(optionNames)
+    exports.ox_target:removeGlobalObject(optionNames)
+end
+
+-- Remove target model
+GlitchLib.Target.RemoveTargetModel = function(models, optionNames)
+    exports.ox_target:removeModel(models, optionNames)
+end
+
+-- Add a target entity by network ID
+GlitchLib.Target.AddNetworkedEntity = function(netIds, options)
+    return exports.ox_target:addEntity(netIds, options)
+end
+
+-- Remove a networked entity target
+GlitchLib.Target.RemoveNetworkedEntity = function(netIds, optionNames)
+    exports.ox_target:removeEntity(netIds, optionNames)
+end
+
+-- Remove a local entity target
+GlitchLib.Target.RemoveLocalEntity = function(entities, optionNames)
+    exports.ox_target:removeLocalEntity(entities, optionNames)
+end
+
+-- Add a polygon zone
+GlitchLib.Target.AddPolyZone = function(name, points, options, targetOptions)
+    local polyZone = {
+        points = points,
+        name = name,
+        thickness = options.height or options.thickness or 4.0,
+        debug = options.debugPoly or false,
+        drawSprite = options.drawSprite,
+        options = targetOptions
+    }
+    return exports.ox_target:addPolyZone(polyZone)
+end
+
+-- Add aliases for consistency with other naming conventions
+GlitchLib.Target.AddBoxTarget = GlitchLib.Target.AddBoxZone
+GlitchLib.Target.AddSphereTarget = GlitchLib.Target.AddSphereZone
+GlitchLib.Target.AddPolyTarget = GlitchLib.Target.AddPolyZone
+GlitchLib.Target.RemoveTarget = GlitchLib.Target.RemoveZone

@@ -72,3 +72,62 @@ GlitchLib.Progression.HasRank = function(source, rank)
     if not source or not rank then return false end
     return exports.pickle_xp:HasRank(source, rank)
 end
+
+-- Add XP to a specific category for a player
+GlitchLib.Progression.AddPlayerXP = function(source, name, xp)
+    if not source or not name or not xp then return false end
+    exports.pickle_xp:AddPlayerXP(source, name, xp)
+    return true
+end
+
+-- Remove XP from a specific category for a player
+GlitchLib.Progression.RemovePlayerXP = function(source, name, xp)
+    if not source or not name or not xp then return false end
+    exports.pickle_xp:RemovePlayerXP(source, name, xp)
+    return true
+end
+
+-- Set XP for a specific category for a player
+GlitchLib.Progression.SetPlayerXP = function(source, name, xp)
+    if not source or not name or not xp then return false end
+    exports.pickle_xp:SetPlayerXP(source, name, xp)
+    return true
+end
+
+-- Get XP data for a specific category for a player
+GlitchLib.Progression.GetPlayerXPData = function(source, name)
+    if not source or not name then return nil end
+    return exports.pickle_xp:GetPlayerXPData(source, name)
+end
+
+-- Get level for a specific category for a player
+GlitchLib.Progression.GetPlayerLevel = function(source, name)
+    if not source or not name then return 0 end
+    return exports.pickle_xp:GetPlayerLevel(source, name)
+end
+
+-- Initialize XP for a player
+GlitchLib.Progression.InitializePlayerXP = function(source, cb)
+    if not source then return false end
+    exports.pickle_xp:InitializePlayerXP(source, cb)
+    return true
+end
+
+-- Register an XP category
+GlitchLib.Progression.RegisterXPCategory = function(name, label, xpStart, xpFactor, maxLevel)
+    if not name or not label or not xpStart or not xpFactor then return false end
+    exports.pickle_xp:RegisterXPCategory(name, label, xpStart, xpFactor, maxLevel)
+    return true
+end
+
+-- Get required XP for a specific level in a category (shared function)
+GlitchLib.Progression.GetLevelXP = function(name, level)
+    if not name or not level then return 0 end
+    return exports.pickle_xp:GetLevelXP(name, level)
+end
+
+-- Get current level of a category (shared function)
+GlitchLib.Progression.GetCategoryLevel = function(name)
+    if not source or not name then return 0 end
+    return exports.pickle_xp:GetCategoryLevel(name)
+end

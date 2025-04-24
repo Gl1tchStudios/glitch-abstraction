@@ -1,125 +1,155 @@
--- QB Inventory
-GlitchLib.Utils.DebugLog('QB Inventory module loaded')
+-- QBCore Inventory Server Module
 
-local QBCore = nil
+GlitchLib.Utils.DebugLog('Loading qb-inventory server module')
 
-local function initQBCore()
-    local success, result = pcall(function()
-        return exports['qb-core']:GetCoreObject()
-    end)
-    
-    if not success then
-        success, result = pcall(function()
-            return exports['qb-core']:GetSharedObject()
-        end)
-    end
-    
-    if not success then
-        success, result = pcall(function()
-            return exports['qb-core']:getCore()
-        end)
-    end
-    
-    if not success or result == nil then
-        GlitchLib.Utils.DebugLog('ERROR: Failed to initialize QBCore for inventory - export not found')
-        return false
-    end
-    
-    return result
-end
-
-QBCore = initQBCore()
-
--- Item Management
-GlitchLib.Inventory.AddItem = function(source, item, count, metadata)
-    if not QBCore then return false end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        return Player.Functions.AddItem(item, count, nil, metadata)
-    end
+-- Check if resource is actually available
+if GetResourceState('qb-inventory') ~= 'started' then
+    GlitchLib.Utils.DebugLog('qb-inventory resource is not available')
     return false
 end
 
-GlitchLib.Inventory.RemoveItem = function(source, item, count, slot, metadata)
-    if not QBCore then return false end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        return Player.Functions.RemoveItem(item, count, slot, metadata)
-    end
-    return false
+-- Ensure inventory namespace exists
+GlitchLib.Inventory = GlitchLib.Inventory or {}
+
+-- Inventory Management
+GlitchLib.Inventory.LoadInventory = function(source, citizenid)
+    return exports['qb-inventory']:LoadInventory(source, citizenid)
 end
 
-GlitchLib.Inventory.GetItem = function(source, item, metadata)
-    if not QBCore then return nil end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        local items = Player.Functions.GetItemsByName(item)
-        if metadata then
-            for _, itemData in pairs(items) do
-                if itemData.info == metadata then
-                    return itemData
-                end
-            end
-            return nil
-        end
-        return Player.Functions.GetItemByName(item)
-    end
-    return nil
+GlitchLib.Inventory.SaveInventory = function(source, offline)
+    return exports['qb-inventory']:SaveInventory(source, offline or false)
 end
 
-GlitchLib.Inventory.GetItemCount = function(source, item, metadata)
-    if not QBCore then return 0 end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        if metadata then
-            local count = 0
-            local items = Player.Functions.GetItemsByName(item)
-            for _, itemData in pairs(items) do
-                if itemData.info == metadata then
-                    count = count + itemData.amount
-                end
-            end
-            return count
-        end
-        return Player.Functions.GetItemByName(item)?.amount or 0
-    end
-    return 0
+GlitchLib.Inventory.ClearInventory = function(source, filterItems)
+    return exports['qb-inventory']:ClearInventory(source, filterItems)
 end
 
-GlitchLib.Inventory.CanCarryItem = function(source, item, count)
-    if not QBCore then return false end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        return Player.Functions.CanCarryItem(item, count)
-    end
-    return false
+-- Opening/closing inventories
+GlitchLib.Inventory.OpenInventory = function(source, identifier, data)
+    return exports['qb-inventory']:OpenInventory(source, identifier, data)
 end
 
-GlitchLib.Inventory.CanSwapItem = function(source, item, count, toSlot)
-    if not QBCore then return false end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        return Player.Functions.CanCarryItem(item, count) -- QB doesn't have a direct swap check
-    end
-    return false
+GlitchLib.Inventory.CloseInventory = function(source, identifier)
+    return exports['qb-inventory']:CloseInventory(source, identifier)
+end
+
+GlitchLib.Inventory.OpenInventoryById = function(source, playerId)
+    return exports['qb-inventory']:OpenInventoryById(source, playerId)
+end
+
+-- Shop functions
+GlitchLib.Inventory.CreateShop = function(shopData)
+    return exports['qb-inventory']:CreateShop(shopData)
+end
+
+GlitchLib.Inventory.OpenShop = function(source, name)
+    return exports['qb-inventory']:OpenShop(source, name)
+end
+
+-- Item functions
+GlitchLib.Inventory.CanAddItem = function(source, item, amount)
+    return exports['qb-inventory']:CanAddItem(source, item, amount)
+end
+
+GlitchLib.Inventory.AddItem = function(source, item, amount, slot, info, reason)
+    return exports['qb-inventory']:AddItem(source, item, amount, slot or false, info or false, reason or 'glitch-lib:addItem')
+end
+
+GlitchLib.Inventory.RemoveItem = function(source, item, amount, slot, reason)
+    return exports['qb-inventory']:RemoveItem(source, item, amount, slot or false, reason or 'glitch-lib:removeItem')
 end
 
 GlitchLib.Inventory.SetInventory = function(source, items)
-    if not QBCore then return false end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player and items then
-        Player.Functions.SetInventory(items)
-        return true
+    return exports['qb-inventory']:SetInventory(source, items)
+end
+
+GlitchLib.Inventory.SetItemData = function(source, itemName, key, val)
+    return exports['qb-inventory']:SetItemData(source, itemName, key, val)
+end
+
+GlitchLib.Inventory.UseItem = function(itemName, callback)
+    return exports['qb-inventory']:UseItem(itemName, callback)
+end
+
+GlitchLib.Inventory.HasItem = function(source, items, amount)
+    return exports['qb-inventory']:HasItem(source, items, amount)
+end
+
+-- Weight and slot information
+GlitchLib.Inventory.GetFreeWeight = function(source)
+    return exports['qb-inventory']:GetFreeWeight(source)
+end
+
+GlitchLib.Inventory.GetSlots = function(identifier)
+    return exports['qb-inventory']:GetSlots(identifier)
+end
+
+-- Item retrieval
+GlitchLib.Inventory.GetSlotsByItem = function(items, itemName)
+    return exports['qb-inventory']:GetSlotsByItem(items, itemName)
+end
+
+GlitchLib.Inventory.GetFirstSlotByItem = function(items, itemName)
+    return exports['qb-inventory']:GetFirstSlotByItem(items, itemName)
+end
+
+GlitchLib.Inventory.GetItemBySlot = function(source, slot)
+    return exports['qb-inventory']:GetItemBySlot(source, slot)
+end
+
+GlitchLib.Inventory.GetItemByName = function(source, item)
+    return exports['qb-inventory']:GetItemByName(source, item)
+end
+
+GlitchLib.Inventory.GetItemsByName = function(source, item)
+    return exports['qb-inventory']:GetItemsByName(source, item)
+end
+
+GlitchLib.Inventory.GetItemCount = function(source, items)
+    return exports['qb-inventory']:GetItemCount(source, items)
+end
+
+-- Inventory state control
+GlitchLib.Inventory.SetBusy = function(source, state)
+    if state == nil then state = true end
+    local player = Player(source)
+    if player then
+        player.state.inv_busy = state
+    end
+    return true
+end
+
+GlitchLib.Inventory.IsBusy = function(source)
+    local player = Player(source)
+    return player and player.state.inv_busy or false
+end
+
+-- Helper functions
+GlitchLib.Inventory.HasEnoughOfItem = function(source, itemName, amount)
+    local count = GlitchLib.Inventory.GetItemCount(source, itemName)
+    return count >= amount, count
+end
+
+GlitchLib.Inventory.GiveItemToPlayer = function(source, target, item, amount, info)
+    if source == target then return false end
+    
+    if GlitchLib.Inventory.RemoveItem(source, item, amount, false, 'glitch-lib:giveItem') then
+        if GlitchLib.Inventory.AddItem(target, item, amount, false, info, 'glitch-lib:receiveItem') then
+            return true
+        else
+            -- Return the item if target couldn't receive it
+            GlitchLib.Inventory.AddItem(source, item, amount, false, info, 'glitch-lib:returnItem')
+            return false
+        end
     end
     return false
 end
 
-GlitchLib.Inventory.ClearInventory = function(source)
-    if not QBCore then return false end
-    local Player = QBCore.Functions.GetPlayer(source)
-    if Player then
-        Player.Functions.ClearInventory()
-        return true
-    end
-    return false
-end
+-- Create aliases for consistent function naming across the library
+GlitchLib.Inventory.LockInventory = function(source) GlitchLib.Inventory.SetBusy(source, true) end
+GlitchLib.Inventory.UnlockInventory = function(source) GlitchLib.Inventory.SetBusy(source, false) end
+GlitchLib.Inventory.Open = GlitchLib.Inventory.OpenInventory
+GlitchLib.Inventory.Close = GlitchLib.Inventory.CloseInventory
+
+GlitchLib.Utils.DebugLog('qb-inventory server module loaded')
+return true
