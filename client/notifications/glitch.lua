@@ -206,12 +206,76 @@ end
 
 -- Create top-level functions that route to appropriate notification system
 GlitchLib.Notifications.Show = function(params)
-    -- If configured to use Glitch and it's available, use it
-    if (Config.NotificationSystem == 'glitch' or Config.NotificationSystem == 'auto') and glitchNotificationsAvailable then
+    -- If explicitly configured to use Glitch, then use it when available
+    if Config.NotificationSystem == 'glitch' and glitchNotificationsAvailable then
         return GlitchLib.Notifications.Glitch.Show(params)
     end
     
-    -- Otherwise use the fallback system
+    -- For auto mode, implement a proper priority order
+    if Config.NotificationSystem == 'auto' then
+        -- Define the priority order for auto detection
+        local priorityOrder = Config.NotificationsPriority or {
+            'ox', -- Default to ox first
+            'qb',
+            'esx', 
+            'glitch', -- Glitch comes last in priority for auto mode
+            'native'
+        }
+        
+        -- Try each system in priority order
+        for _, system in ipairs(priorityOrder) do
+            -- Check for ox lib
+            if system == 'ox' and GetResourceState('ox_lib') == 'started' then
+                exports['ox_lib']:notify({
+                    title = params.title,
+                    description = params.description or params.message,
+                    type = params.type or 'inform',
+                    duration = params.duration or 5000,
+                    position = params.position or 'top-right',
+                    icon = params.icon
+                })
+                return 1 -- Return dummy ID
+            end
+            
+            -- Check for QBCore
+            if system == 'qb' and GlitchLib.FrameworkName == 'QBCore' then
+                TriggerEvent('QBCore:Notify', params.description or params.message, 
+                    params.type or 'primary', params.duration or 5000)
+                return 2 -- Return dummy ID
+            end
+            
+            -- Check for ESX
+            if system == 'esx' and GlitchLib.FrameworkName == 'ESX' then
+                TriggerEvent('esx:showNotification', 
+                    (params.title and (params.title .. ': ') or '') .. 
+                    (params.description or params.message or ''), 
+                    params.type or 'info')
+                return 3 -- Return dummy ID
+            end
+            
+            -- Check for Glitch (now lower priority in auto mode)
+            if system == 'glitch' and glitchNotificationsAvailable then
+                return GlitchLib.Notifications.Glitch.Show(params)
+            end
+        end
+        
+        -- Native as absolute fallback (if included in priority list)
+        BeginTextCommandThefeedPost('STRING')
+        AddTextComponentSubstringPlayerName(params.description or params.message or '')
+        EndTextCommandThefeedPostTicker(false, true)
+        return 4 -- Return dummy ID
+    end
+    
+    -- For specific configured systems
+    if Config.NotificationSystem == 'ox' then
+        return GlitchLib.Notifications.Fallback('Show', params)
+    elseif Config.NotificationSystem == 'qb' then
+        return GlitchLib.Notifications.Fallback('Show', params)
+    elseif Config.NotificationSystem == 'esx' then
+        return GlitchLib.Notifications.Fallback('Show', params)
+    end
+    
+    -- Last resort fallback
     return GlitchLib.Notifications.Fallback('Show', params)
 end
 
