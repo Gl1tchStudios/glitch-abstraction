@@ -184,6 +184,51 @@ GlitchLib.Scaleform.ShowMessageBox = function(title, subtitle, footer)
     return handle
 end
 
+-- Show midsize banner (same functionality as CSform.MidsizeBanner)
+GlitchLib.Scaleform.ShowMidsizeBanner = function(title, subtitle, bannerColor, waitTime, playSound)
+    -- Load the correct scaleform
+    local handle = GlitchLib.Scaleform.Load("MIDSIZED_MESSAGE")
+    if not handle then return nil end
+    
+    -- Play sound if requested
+    if playSound then
+        PlaySoundFrontend(-1, "CHECKPOINT_PERFECT", "HUD_MINI_GAME_SOUNDSET", true)
+    end
+    
+    -- Set default wait time if not provided
+    waitTime = waitTime or 5
+    
+    -- Call the correct function with parameters matching the original
+    GlitchLib.Scaleform.CallFunction(handle, false, "SHOW_COND_SHARD_MESSAGE", title, subtitle, bannerColor, true)
+    
+    -- Create thread to display and handle timing
+    CreateThread(function()
+        local startTime = GetGameTimer()
+        local duration = (waitTime * 1000) - 1000
+        
+        -- Display the scaleform
+        while GetGameTimer() - startTime < duration do
+            Wait(0)
+            GlitchLib.Scaleform.Render(handle)
+        end
+        
+        -- Fade out animation
+        GlitchLib.Scaleform.CallFunction(handle, false, "SHARD_ANIM_OUT", 2, 0.3, true)
+        
+        -- Continue rendering during fade out
+        local fadeOutTime = GetGameTimer()
+        while GetGameTimer() - fadeOutTime < 1000 do
+            Wait(0)
+            GlitchLib.Scaleform.Render(handle)
+        end
+        
+        -- Unload the scaleform
+        GlitchLib.Scaleform.Unload(handle)
+    end)
+    
+    return handle
+end
+
 -- Show mission passed scaleform
 GlitchLib.Scaleform.ShowMissionPassed = function(title, subtitle, rp, money)
     local handle = GlitchLib.Scaleform.Load("MP_MISSION_NAME_FREEMODE")

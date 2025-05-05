@@ -31,11 +31,23 @@ GlitchLib.Target.AddTargetModel = function(models, options)
     return exports.ox_target:addModel(models, options)
 end
 
--- Add a target zone (box, sphere, etc.)
-GlitchLib.Target.AddBoxZone = function(name, center, length, width, options, targetOptions)
+-- Add a target zones
+GlitchLib.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
+    if type(arg1) == 'table' then
+        local options = arg1
+        return exports.ox_target:addBoxZone(options)
+    end
+    
+    local name = arg1
+    local center = arg2
+    local length = arg3
+    local width = arg4
+    local options = arg5 or {}
+    local targetOptions = arg6
+    
     local boxZone = {
         coords = center,
-        size = vector3(length, width, 2.0),
+        size = type(length) == 'number' and vector3(length, width, 2.0) or length,
         rotation = options.heading or 0.0,
         debug = options.debugPoly or false,
         options = targetOptions

@@ -4,16 +4,13 @@ if not GlitchLib or not GlitchLib.Utils then
     return false
 end
 
--- Initialize notifications namespace
 GlitchLib.Notifications = GlitchLib.Notifications or {}
 GlitchLib.Notifications.Glitch = GlitchLib.Notifications.Glitch or {}
 
--- Initialize the available state
 local glitchNotificationsAvailable = GetResourceState('glitch-notifications') == 'started'
 
 if not glitchNotificationsAvailable then
     GlitchLib.Utils.DebugLog('glitch-notifications resource is not available')
-    -- Don't return false, just mark as unavailable
 else
     GlitchLib.Utils.DebugLog('Glitch notifications module loaded')
 end
@@ -22,7 +19,6 @@ end
 local activeNotifications = {}
 local nextNotificationId = 1
 
--- Map notification types to colors
 local typeToColor = {
     success = '#00a65a',  -- Green
     error = '#dd4b39',    -- Red
@@ -31,7 +27,6 @@ local typeToColor = {
     primary = '#3c8dbc'   -- Light Blue
 }
 
--- Basic notification in Glitch namespace
 GlitchLib.Notifications.Glitch.Show = function(params)
     if not glitchNotificationsAvailable then 
         return GlitchLib.Notifications.Fallback('Show', params)

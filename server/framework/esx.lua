@@ -67,21 +67,53 @@ end
 
 -- Register a server callback
 GlitchLib.Framework.RegisterCallback = function(name, cb)
+    -- Directly use ESX.RegisterServerCallback
     ESX.RegisterServerCallback(name, cb)
+    
+    -- Verify the callback was registered
+    if not ESX.DoesServerCallbackExist(name) then
+        GlitchLib.Utils.DebugLog('WARNING: Failed to register callback: ' .. name)
+        return false
+    end
+    
+    GlitchLib.Utils.DebugLog('Registered server callback: ' .. name)
+    return true
+end
+
+-- Add a function to check if callback exists
+GlitchLib.Framework.DoesCallbackExist = function(name)
+    return ESX.DoesServerCallbackExist(name)
 end
 
 -- Trigger client callback
 GlitchLib.Framework.TriggerClientCallback = function(source, name, cb, ...)
-    ESX.TriggerClientCallback(name, source, cb, ...)
+    if not source or type(source) ~= "number" then
+        GlitchLib.Utils.DebugLog('ERROR: Invalid source provided to TriggerClientCallback')
+        return false
+    end
+    
+    ESX.TriggerClientCallback(name, source, function(...)
+        if cb then cb(...) end
+    end, ...)
+    
+    return true
 end
 
 -- Money Management
 GlitchLib.Framework.GetMoney = function(source, type)
     local xPlayer = ESX.GetPlayerFromId(source)
     if xPlayer then
-        return xPlayer.getAccount(type).money
+        if type == 'bank' then
+            return xPlayer.getAccount('bank').money
+        elseif type == 'cash' then
+            return xPlayer.getMoney()
+        elseif type == 'dirty' then
+            return xPlayer.getAccount('black_money').money
+        else
+            return xPlayer.getAccount(type).money
+        end
     end
-    return 0
+    return
 end
 
 GlitchLib.Framework.AddMoney = function(source, type, amount)
