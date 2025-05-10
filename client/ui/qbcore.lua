@@ -131,11 +131,13 @@ GlitchLib.UI.HideTextUI = function()
     end
 end
 
--- Alert dialog (using phone notification as fallback)
-GlitchLib.UI.Alert = function(title, message, type, icon)
-    -- QB doesn't have built-in alerts, using notification
-    QBCore.Functions.Notify(title .. "\n" .. message, type or "primary", 5000)
-    return true -- No way to wait for user response in basic QB
+if GetResourceState('ox_lib') ~= 'started' then
+    -- Alert dialog (using phone notification as fallback)
+    GlitchLib.UI.Alert = function(title, message, type, icon)
+        -- QB doesn't have built-in alerts, using notification
+        QBCore.Functions.Notify(title .. "\n" .. message, type or "primary", 5000)
+        return true -- No way to wait for user response in basic QB
+    end
 end
 
 -- Helper function for DrawText3D

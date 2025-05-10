@@ -10,7 +10,7 @@ end
 
 -- Existing functions first
 -- Item Management
-GlitchLib.Inventory.AddItem = function(source, item, count, metadata, slot)
+GlitchLib.Inventory.AddItem = function(source, item, amount, metadata, slot, info, reason)
     return exports.ox_inventory:AddItem(source, item, count, metadata, slot)
 end
 

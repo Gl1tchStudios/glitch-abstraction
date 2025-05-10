@@ -58,6 +58,24 @@ GlitchLib.Inventory.UseSlot = function(slot)
     return true
 end
 
+GlitchLib.Inventory.Search = function(search, itemName, metadata) -- metadata is used for ox inventory. Currently unsupported by qb-inventory
+    QBCore = exports['qb-core']:GetCoreObject()
+    
+    if search == 'slots' then 
+        QBCore.Functions.TriggerCallback('glitch-lib:server:GetSlotsByItem', function(result)
+            return result
+        end, source, itemName)
+    elseif search == 'count' then 
+        local count = 0
+        QBCore.Functions.TriggerCallback('glitch-lib:server:GetItemCount', function(result)
+            return result
+        end, source, itemName)
+        return count
+    end
+    
+    return {} 
+end
+
 -- Use a specific item
 GlitchLib.Inventory.UseItem = function(item)
     if not item then return false end

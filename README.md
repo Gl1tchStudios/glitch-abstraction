@@ -125,7 +125,7 @@ GlitchLib.Inventory.SetCanUseWeapons(state) -- Enable/disable weapon usage
 #### Server-Side
 ```lua
 -- Item Management
-GlitchLib.Inventory.AddItem(source, item, count, metadata, slot) -- Add item to player
+GlitchLib.Inventory.AddItem(source, item, amount, metadata, slot, info, reason) -- Add item to player | QB does NOT use metadata and OX does NOT use info, or reason
 GlitchLib.Inventory.RemoveItem(source, item, count, metadata, slot) -- Remove item from player
 GlitchLib.Inventory.GetItem(source, item, metadata) -- Get item data for player
 GlitchLib.Inventory.GetItemCount(source, item, metadata) -- Get count of item player has
@@ -374,7 +374,7 @@ GlitchLib.Target.AddTargetEntity(entities, options) -- Add options to specific e
 GlitchLib.Target.AddTargetModel(models, options) -- Add options to all entities of specified models
 
 -- Zone Targeting
-GlitchLib.Target.AddBoxZone(name, center, length, width, options, targetOptions) -- Create box interaction zone
+GlitchLib.Target.AddBoxZone(name, center, length, width, options, targetOptions) -- Create box interaction zone | Alternative for ox: AddBoxZone({parameters})
 GlitchLib.Target.AddSphereZone(name, center, radius, options, targetOptions) -- Create spherical interaction zone
 GlitchLib.Target.RemoveZone(id) -- Remove interaction zone
 

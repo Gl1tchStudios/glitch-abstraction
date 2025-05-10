@@ -51,8 +51,8 @@ GlitchLib.Inventory.CanAddItem = function(source, item, amount)
     return exports['qb-inventory']:CanAddItem(source, item, amount)
 end
 
-GlitchLib.Inventory.AddItem = function(source, item, amount, slot, info, reason)
-    return exports['qb-inventory']:AddItem(source, item, amount, slot or false, info or false, reason or 'glitch-lib:addItem')
+GlitchLib.Inventory.AddItem = function(source, item, amount, metadata, slot, info, reason)
+    return exports['qb-inventory']:AddItem(source, item, amount, slot, info, reason or 'glitch-lib:addItem')
 end
 
 GlitchLib.Inventory.RemoveItem = function(source, item, amount, slot, reason)
@@ -144,6 +144,18 @@ GlitchLib.Inventory.GiveItemToPlayer = function(source, target, item, amount, in
     end
     return false
 end
+
+local QBCore = exports['qb-core']:GetCoreObject()
+
+QBCore.Functions.CreateCallback('glitch-lib:server:GetSlotsByItem', function(source, cb, itemName)
+    local Player = QBCore.Functions.GetPlayer(source)
+    local items = Player.PlayerData.Items
+    cb(exports['qb-inventory']:GetSlotsByItem(items, itemName))
+end)
+
+QBCore.Functions.CreateCallback('glitch-lib:server:GetItemCount', function(source, cb, itemName)
+    cb(exports['qb-inventory']:GetItemCount(source, itemName))
+end)
 
 -- Create aliases for consistent function naming across the library
 GlitchLib.Inventory.LockInventory = function(source) GlitchLib.Inventory.SetBusy(source, true) end

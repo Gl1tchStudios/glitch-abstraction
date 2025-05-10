@@ -38,7 +38,71 @@ GlitchLib.Target.AddTargetModel = function(models, options)
 end
 
 -- Add a box zone
-GlitchLib.Target.AddBoxZone = function(name, center, length, width, options, targetOptions)
+GlitchLib.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
+    local name, center, length, width, options, targetOptions
+    
+    if type(arg1) == 'table' then
+        -- Handle table-style input (from ox format)
+        local params = arg1
+        name = params.name
+        center = params.coords
+        
+        if type(params.size) == 'vector3' then
+            length = params.size.x
+            width = params.size.y
+        else
+            length = params.size
+            width = params.size
+        end
+        
+        options = {
+            heading = params.rotation,
+            debugPoly = params.debug,
+            minZ = params.minZ,
+            maxZ = params.maxZ
+        }
+        
+        targetOptions = params.options
+        
+        if targetOptions and not targetOptions[1] and type(targetOptions) == 'table' then
+            targetOptions = {targetOptions}
+        end
+    else
+        name = arg1
+        center = arg2
+        length = arg3
+        width = arg4
+        options = arg5 or {}
+        targetOptions = arg6
+    end
+
+    local qbOptions = {}
+    
+    if targetOptions then
+        for i, option in pairs(type(targetOptions) == 'table' and targetOptions or {}) do
+            table.insert(qbOptions, {
+                type = option.type or "client",
+                event = option.event,
+                icon = option.icon,
+                label = option.label,
+                job = option.job,
+                canInteract = option.canInteract,
+                action = option.onSelect or option.action
+            })
+        end
+    end
+
+    local distance = 2.5 
+    if targetOptions then
+        if type(targetOptions) == 'table' then
+            if targetOptions.distance then
+                distance = targetOptions.distance
+            elseif targetOptions[1] and targetOptions[1].distance then
+                distance = targetOptions[1].distance
+            end
+        end
+    end
+    
     return exports['qb-target']:AddBoxZone(name, center, length, width, {
         name = name,
         heading = options.heading or 0.0,
@@ -46,8 +110,8 @@ GlitchLib.Target.AddBoxZone = function(name, center, length, width, options, tar
         minZ = options.minZ,
         maxZ = options.maxZ
     }, {
-        options = targetOptions,
-        distance = targetOptions[1].distance or 2.5
+        options = qbOptions,
+        distance = distance
     })
 end
 

@@ -50,10 +50,13 @@ GlitchLib.Framework.GetMoney = function(source)
 end
 
 GlitchLib.Framework.AddMoney = function(source, amount)
+    print('addMoney from lib', source, amount)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
         player.Functions.AddMoney('cash', amount, 'GlitchLib AddMoney')
         return true
+    else
+        print('player false')
     end
     return false
 end
