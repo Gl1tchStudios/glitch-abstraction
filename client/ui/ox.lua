@@ -1,13 +1,13 @@
--- ox_lib UI module for GlitchLib
+-- ox_lib UI module for GlitchAbst
 
 -- Check if resource is actually available
 if GetResourceState('ox_lib') ~= 'started' then
-    GlitchLib.Utils.DebugLog('ox_lib resource is not available')
+    GlitchAbst.Utils.DebugLog('ox_lib resource is not available')
     return false
 end
 
 -- Input dialog
-GlitchLib.UI.Input = function(header, inputs, options)
+GlitchAbst.UI.Input = function(header, inputs, options)
     if options then
         -- Modern usage with options
         return exports['ox_lib']:inputDialog(header, inputs, options)
@@ -18,17 +18,17 @@ GlitchLib.UI.Input = function(header, inputs, options)
 end
 
 -- Force close an open input dialog
-GlitchLib.UI.CloseInputDialog = function()
+GlitchAbst.UI.CloseInputDialog = function()
     return exports['ox_lib']:closeInputDialog()
 end
 
 -- Advanced input dialog with typed fields
-GlitchLib.UI.InputForm = function(title, fields, options)
-    return GlitchLib.UI.Input(title, fields, options)
+GlitchAbst.UI.InputForm = function(title, fields, options)
+    return GlitchAbst.UI.Input(title, fields, options)
 end
 
 -- Helper functions for specific input types
-GlitchLib.UI.Inputs = {
+GlitchAbst.UI.Inputs = {
     -- Create a text input field
     Text = function(label, options)
         options = options or {}
@@ -220,36 +220,36 @@ GlitchLib.UI.Inputs = {
 }
 
 -- Convenience method to build form from multiple field types
-GlitchLib.UI.BuildForm = function(title, fields, options)
-    return GlitchLib.UI.InputForm(title, fields, options)
+GlitchAbst.UI.BuildForm = function(title, fields, options)
+    return GlitchAbst.UI.InputForm(title, fields, options)
 end
 
 -- Context menu system
 -- Register a context menu with full options support
-GlitchLib.UI.RegisterContext = function(context)
+GlitchAbst.UI.RegisterContext = function(context)
     -- Direct passthrough to ox_lib
     return exports['ox_lib']:registerContext(context)
 end
 
 -- Show a registered context menu
-GlitchLib.UI.ShowContext = function(id)
+GlitchAbst.UI.ShowContext = function(id)
     return exports['ox_lib']:showContext(id)
 end
 
 -- Hide any visible context menu
-GlitchLib.UI.HideContext = function(onExit)
+GlitchAbst.UI.HideContext = function(onExit)
     return exports['ox_lib']:hideContext(onExit)
 end
 
 -- Get the ID of the currently open context menu
-GlitchLib.UI.GetOpenContext = function()
+GlitchAbst.UI.GetOpenContext = function()
     return exports['ox_lib']:getOpenContextMenu()
 end
 
 -- Helper function to create and show a context menu in one step
-GlitchLib.UI.OpenContextMenu = function(id, title, options, menu, canClose)
+GlitchAbst.UI.OpenContextMenu = function(id, title, options, menu, canClose)
     -- Register the context menu first
-    GlitchLib.UI.RegisterContext({
+    GlitchAbst.UI.RegisterContext({
         id = id,
         title = title,
         options = options,
@@ -258,16 +258,16 @@ GlitchLib.UI.OpenContextMenu = function(id, title, options, menu, canClose)
     })
     
     -- Then show it
-    return GlitchLib.UI.ShowContext(id)
+    return GlitchAbst.UI.ShowContext(id)
 end
 
 -- Legacy support for existing functions
-GlitchLib.UI.ContextMenu = function(id, title, options, position)
-    return GlitchLib.UI.ShowContext(id)
+GlitchAbst.UI.ContextMenu = function(id, title, options, position)
+    return GlitchAbst.UI.ShowContext(id)
 end
 
-GlitchLib.UI.CreateContextMenu = function(id, title, options)
-    return GlitchLib.UI.RegisterContext({
+GlitchAbst.UI.CreateContextMenu = function(id, title, options)
+    return GlitchAbst.UI.RegisterContext({
         id = id,
         title = title,
         options = options
@@ -275,7 +275,7 @@ GlitchLib.UI.CreateContextMenu = function(id, title, options)
 end
 
 -- Helper function to build complex nested menus
-GlitchLib.UI.BuildMenuStructure = function(menuTree)
+GlitchAbst.UI.BuildMenuStructure = function(menuTree)
     -- Each item in menuTree should have an id, title, options and optionally a parent
     for _, menu in pairs(menuTree) do
         if menu.parent then
@@ -284,7 +284,7 @@ GlitchLib.UI.BuildMenuStructure = function(menuTree)
         end
         
         -- Register this menu
-        GlitchLib.UI.RegisterContext({
+        GlitchAbst.UI.RegisterContext({
             id = menu.id,
             title = menu.title,
             menu = menu.menu,
@@ -303,7 +303,7 @@ GlitchLib.UI.BuildMenuStructure = function(menuTree)
 end
 
 -- Show a confirmation context menu
-GlitchLib.UI.ConfirmContextMenu = function(id, title, message, onConfirm, onCancel, confirmText, cancelText)
+GlitchAbst.UI.ConfirmContextMenu = function(id, title, message, onConfirm, onCancel, confirmText, cancelText)
     local options = {
         {
             title = confirmText or "Confirm",
@@ -330,43 +330,43 @@ GlitchLib.UI.ConfirmContextMenu = function(id, title, message, onConfirm, onCanc
         })
     end
     
-    GlitchLib.UI.RegisterContext({
+    GlitchAbst.UI.RegisterContext({
         id = id,
         title = title,
         options = options
     })
     
-    return GlitchLib.UI.ShowContext(id)
+    return GlitchAbst.UI.ShowContext(id)
 end
 
 -- Keyboard navigation menu system
 -- Register a menu with options and callback
-GlitchLib.UI.RegisterMenu = function(data, cb)
+GlitchAbst.UI.RegisterMenu = function(data, cb)
     return exports['ox_lib']:registerMenu(data, cb)
 end
 
 -- Show a registered menu by ID
-GlitchLib.UI.ShowMenu = function(id)
+GlitchAbst.UI.ShowMenu = function(id)
     return exports['ox_lib']:showMenu(id)
 end
 
 -- Hide the currently open menu
-GlitchLib.UI.HideMenu = function(onExit)
+GlitchAbst.UI.HideMenu = function(onExit)
     return exports['ox_lib']:hideMenu(onExit)
 end
 
 -- Get the ID of the currently open menu
-GlitchLib.UI.GetOpenMenu = function()
+GlitchAbst.UI.GetOpenMenu = function()
     return exports['ox_lib']:getOpenMenu()
 end
 
 -- Update menu options dynamically
-GlitchLib.UI.SetMenuOptions = function(id, options, index)
+GlitchAbst.UI.SetMenuOptions = function(id, options, index)
     return exports['ox_lib']:setMenuOptions(id, options, index)
 end
 
 -- Helper function to create a menu option
-GlitchLib.UI.CreateMenuOption = function(label, options)
+GlitchAbst.UI.CreateMenuOption = function(label, options)
     options = options or {}
     
     local menuOption = {
@@ -397,7 +397,7 @@ GlitchLib.UI.CreateMenuOption = function(label, options)
 end
 
 -- Create and show a menu in one step
-GlitchLib.UI.OpenMenu = function(id, title, options, position, callbacks)
+GlitchAbst.UI.OpenMenu = function(id, title, options, position, callbacks)
     callbacks = callbacks or {}
     
     -- Build the menu configuration
@@ -415,12 +415,12 @@ GlitchLib.UI.OpenMenu = function(id, title, options, position, callbacks)
     }
     
     -- Register and show the menu
-    GlitchLib.UI.RegisterMenu(menuData, callbacks.onSelect)
-    return GlitchLib.UI.ShowMenu(id)
+    GlitchAbst.UI.RegisterMenu(menuData, callbacks.onSelect)
+    return GlitchAbst.UI.ShowMenu(id)
 end
 
 -- Helper to create a confirmation menu
-GlitchLib.UI.ConfirmMenu = function(id, title, message, onConfirm, onCancel)
+GlitchAbst.UI.ConfirmMenu = function(id, title, message, onConfirm, onCancel)
     local options = {
         {
             label = message,
@@ -451,13 +451,13 @@ GlitchLib.UI.ConfirmMenu = function(id, title, message, onConfirm, onCancel)
         end
     }
     
-    return GlitchLib.UI.OpenMenu(id, title, options, 'top-left', callbacks)
+    return GlitchAbst.UI.OpenMenu(id, title, options, 'top-left', callbacks)
 end
 
 -- Enhanced Progress Bar implementation with all parameters
 
 -- Progress bar with complete parameter support
-GlitchLib.UI.ProgressBar = function(params)
+GlitchAbst.UI.ProgressBar = function(params)
     return exports['ox_lib']:progressBar({
         duration = params.duration,
         label = params.label,
@@ -475,7 +475,7 @@ GlitchLib.UI.ProgressBar = function(params)
 end
 
 -- Progress Circle with complete parameter support
-GlitchLib.UI.ProgressCircle = function(params)
+GlitchAbst.UI.ProgressCircle = function(params)
     return exports['ox_lib']:progressCircle({
         duration = params.duration,
         label = params.label,
@@ -493,17 +493,17 @@ GlitchLib.UI.ProgressCircle = function(params)
 end
 
 -- Check if a progress bar/circle is currently active
-GlitchLib.UI.IsProgressActive = function()
+GlitchAbst.UI.IsProgressActive = function()
     return exports['ox_lib']:progressActive()
 end
 
 -- Cancel the current progress if it can be cancelled
-GlitchLib.UI.CancelProgress = function()
+GlitchAbst.UI.CancelProgress = function()
     return exports['ox_lib']:cancelProgress()
 end
 
 -- Helper for creating animation parameters
-GlitchLib.UI.CreateAnimation = function(dict, clip, options)
+GlitchAbst.UI.CreateAnimation = function(dict, clip, options)
     options = options or {}
     return {
         dict = dict,
@@ -520,7 +520,7 @@ GlitchLib.UI.CreateAnimation = function(dict, clip, options)
 end
 
 -- Helper for creating scenario parameters
-GlitchLib.UI.CreateScenario = function(scenario, options)
+GlitchAbst.UI.CreateScenario = function(scenario, options)
     options = options or {}
     return {
         scenario = scenario,
@@ -529,7 +529,7 @@ GlitchLib.UI.CreateScenario = function(scenario, options)
 end
 
 -- Helper for creating prop parameters
-GlitchLib.UI.CreateProp = function(model, options)
+GlitchAbst.UI.CreateProp = function(model, options)
     options = options or {}
     return {
         model = model,
@@ -541,10 +541,10 @@ GlitchLib.UI.CreateProp = function(model, options)
 end
 
 -- Convenience function for showing progress with a drink animation
-GlitchLib.UI.DrinkProgress = function(duration, label, item)
+GlitchAbst.UI.DrinkProgress = function(duration, label, item)
     local itemModel = item or `prop_ld_flow_bottle`
     
-    return GlitchLib.UI.ProgressBar({
+    return GlitchAbst.UI.ProgressBar({
         duration = duration,
         label = label or 'Drinking',
         useWhileDead = false,
@@ -554,8 +554,8 @@ GlitchLib.UI.DrinkProgress = function(duration, label, item)
             move = false,
             combat = true
         },
-        anim = GlitchLib.UI.CreateAnimation('mp_player_intdrink', 'loop_bottle'),
-        prop = GlitchLib.UI.CreateProp(itemModel, {
+        anim = GlitchAbst.UI.CreateAnimation('mp_player_intdrink', 'loop_bottle'),
+        prop = GlitchAbst.UI.CreateProp(itemModel, {
             pos = vec3(0.03, 0.03, 0.02),
             rot = vec3(0.0, 0.0, -1.5)
         })
@@ -563,10 +563,10 @@ GlitchLib.UI.DrinkProgress = function(duration, label, item)
 end
 
 -- Convenience function for showing progress with an eating animation
-GlitchLib.UI.EatProgress = function(duration, label, item)
+GlitchAbst.UI.EatProgress = function(duration, label, item)
     local itemModel = item or `prop_cs_burger_01`
     
-    return GlitchLib.UI.ProgressBar({
+    return GlitchAbst.UI.ProgressBar({
         duration = duration,
         label = label or 'Eating',
         useWhileDead = false,
@@ -576,8 +576,8 @@ GlitchLib.UI.EatProgress = function(duration, label, item)
             move = false,
             combat = true
         },
-        anim = GlitchLib.UI.CreateAnimation('mp_player_inteat@burger', 'mp_player_int_eat_burger'),
-        prop = GlitchLib.UI.CreateProp(itemModel, {
+        anim = GlitchAbst.UI.CreateAnimation('mp_player_inteat@burger', 'mp_player_int_eat_burger'),
+        prop = GlitchAbst.UI.CreateProp(itemModel, {
             pos = vec3(0.02, 0.02, -0.02),
             rot = vec3(0.0, 0.0, 0.0)
         })
@@ -587,23 +587,23 @@ end
 -- Enhanced TextUI implementation with all options and helpers
 
 -- Show TextUI with full options support
-GlitchLib.UI.ShowTextUI = function(text, options)
+GlitchAbst.UI.ShowTextUI = function(text, options)
     -- Direct call to ox_lib
     exports['ox_lib']:showTextUI(text, options)
 end
 
 -- Hide any visible TextUI
-GlitchLib.UI.HideTextUI = function()
+GlitchAbst.UI.HideTextUI = function()
     exports['ox_lib']:hideTextUI()
 end
 
 -- Check if TextUI is currently open
-GlitchLib.UI.IsTextUIOpen = function()
+GlitchAbst.UI.IsTextUIOpen = function()
     return exports['ox_lib']:isTextUIOpen()
 end
 
 -- Helper function to create styled TextUI
-GlitchLib.UI.StyledTextUI = function(text, position, icon, iconColor, style)
+GlitchAbst.UI.StyledTextUI = function(text, position, icon, iconColor, style)
     local options = {
         position = position,
         icon = icon,
@@ -611,11 +611,11 @@ GlitchLib.UI.StyledTextUI = function(text, position, icon, iconColor, style)
         style = style
     }
     
-    GlitchLib.UI.ShowTextUI(text, options)
+    GlitchAbst.UI.ShowTextUI(text, options)
 end
 
 -- Helper for creating animated icon TextUI
-GlitchLib.UI.AnimatedTextUI = function(text, icon, animation, position, iconColor)
+GlitchAbst.UI.AnimatedTextUI = function(text, icon, animation, position, iconColor)
     local options = {
         position = position or 'right-center',
         icon = icon,
@@ -623,11 +623,11 @@ GlitchLib.UI.AnimatedTextUI = function(text, icon, animation, position, iconColo
         iconAnimation = animation
     }
     
-    GlitchLib.UI.ShowTextUI(text, options)
+    GlitchAbst.UI.ShowTextUI(text, options)
 end
 
 -- Common styles for TextUI
-GlitchLib.UI.TextUIStyles = {
+GlitchAbst.UI.TextUIStyles = {
     Success = {
         backgroundColor = '#48BB78',
         color = 'white'
@@ -654,42 +654,42 @@ GlitchLib.UI.TextUIStyles = {
 }
 
 -- Predefined TextUI templates
-GlitchLib.UI.ShowInteractionTextUI = function(text, key)
+GlitchAbst.UI.ShowInteractionTextUI = function(text, key)
     key = key or 'E'
-    GlitchLib.UI.ShowTextUI('[' .. key .. '] - ' .. text, {
+    GlitchAbst.UI.ShowTextUI('[' .. key .. '] - ' .. text, {
         position = 'right-center',
         icon = 'hand',
-        style = GlitchLib.UI.TextUIStyles.Info
+        style = GlitchAbst.UI.TextUIStyles.Info
     })
 end
 
-GlitchLib.UI.ShowSuccessTextUI = function(text)
-    GlitchLib.UI.ShowTextUI(text, {
+GlitchAbst.UI.ShowSuccessTextUI = function(text)
+    GlitchAbst.UI.ShowTextUI(text, {
         position = 'top-center',
         icon = 'circle-check',
-        style = GlitchLib.UI.TextUIStyles.Success
+        style = GlitchAbst.UI.TextUIStyles.Success
     })
 end
 
-GlitchLib.UI.ShowErrorTextUI = function(text)
-    GlitchLib.UI.ShowTextUI(text, {
+GlitchAbst.UI.ShowErrorTextUI = function(text)
+    GlitchAbst.UI.ShowTextUI(text, {
         position = 'top-center',
         icon = 'circle-exclamation',
-        style = GlitchLib.UI.TextUIStyles.Error
+        style = GlitchAbst.UI.TextUIStyles.Error
     })
 end
 
-GlitchLib.UI.ShowWarningTextUI = function(text)
-    GlitchLib.UI.ShowTextUI(text, {
+GlitchAbst.UI.ShowWarningTextUI = function(text)
+    GlitchAbst.UI.ShowTextUI(text, {
         position = 'top-center',
         icon = 'triangle-exclamation',
         iconAnimation = 'pulse',
-        style = GlitchLib.UI.TextUIStyles.Warning
+        style = GlitchAbst.UI.TextUIStyles.Warning
     })
 end
 
 -- Alert dialog that works with ox_target callbacks
-GlitchLib.UI.Alert = function(titleOrParams, message, typeParam, icon)
+GlitchAbst.UI.Alert = function(titleOrParams, message, typeParam, icon)
     local params
     if type(titleOrParams) == 'table' then
         params = {
@@ -716,52 +716,52 @@ GlitchLib.UI.Alert = function(titleOrParams, message, typeParam, icon)
         local result = exports['ox_lib']:alertDialog(params)
         return result
     else
-        GlitchLib.Utils.DebugLog('Alert dialog failed - ox_lib not found')
+        GlitchAbst.Utils.DebugLog('Alert dialog failed - ox_lib not found')
         return "error" 
     end
 end
 
-GlitchLib.alertDialog = GlitchLib.UI.Alert
-GlitchLib.Alert = GlitchLib.UI.Alert
+GlitchAbst.alertDialog = GlitchAbst.UI.Alert
+GlitchAbst.Alert = GlitchAbst.UI.Alert
 
 -- Radial Menu System
 -- Add item(s) to the global radial menu
-GlitchLib.UI.AddRadialItem = function(items)
+GlitchAbst.UI.AddRadialItem = function(items)
     return exports['ox_lib']:addRadialItem(items)
 end
 
 -- Remove an item from the global radial menu by ID
-GlitchLib.UI.RemoveRadialItem = function(id)
+GlitchAbst.UI.RemoveRadialItem = function(id)
     return exports['ox_lib']:removeRadialItem(id)
 end
 
 -- Clear all items from the radial menu
-GlitchLib.UI.ClearRadialItems = function()
+GlitchAbst.UI.ClearRadialItems = function()
     return exports['ox_lib']:clearRadialItems()
 end
 
 -- Register a radial sub-menu with predefined options
-GlitchLib.UI.RegisterRadial = function(radial)
+GlitchAbst.UI.RegisterRadial = function(radial)
     return exports['ox_lib']:registerRadial(radial)
 end
 
 -- Hide the currently open radial menu
-GlitchLib.UI.HideRadial = function()
+GlitchAbst.UI.HideRadial = function()
     return exports['ox_lib']:hideRadial()
 end
 
 -- Enable or disable the radial menu
-GlitchLib.UI.DisableRadial = function(state)
+GlitchAbst.UI.DisableRadial = function(state)
     return exports['ox_lib']:disableRadial(state)
 end
 
 -- Get the ID of the currently open radial menu
-GlitchLib.UI.GetCurrentRadialId = function()
+GlitchAbst.UI.GetCurrentRadialId = function()
     return exports['ox_lib']:getCurrentRadialId()
 end
 
 -- Helper function to create a radial menu item
-GlitchLib.UI.CreateRadialItem = function(id, label, icon, options)
+GlitchAbst.UI.CreateRadialItem = function(id, label, icon, options)
     options = options or {}
     
     local item = {
@@ -786,18 +786,18 @@ GlitchLib.UI.CreateRadialItem = function(id, label, icon, options)
 end
 
 -- Helper function to create and register a radial menu in one step
-GlitchLib.UI.CreateRadialMenu = function(id, items)
+GlitchAbst.UI.CreateRadialMenu = function(id, items)
     local radial = {
         id = id,
         items = items
     }
     
-    return GlitchLib.UI.RegisterRadial(radial)
+    return GlitchAbst.UI.RegisterRadial(radial)
 end
 
 -- Helper function to quickly add a single radial item
-GlitchLib.UI.QuickRadial = function(id, label, icon, onSelect)
-    return GlitchLib.UI.AddRadialItem({
+GlitchAbst.UI.QuickRadial = function(id, label, icon, onSelect)
+    return GlitchAbst.UI.AddRadialItem({
         id = id,
         label = label,
         icon = icon,
@@ -806,15 +806,15 @@ GlitchLib.UI.QuickRadial = function(id, label, icon, onSelect)
 end
 
 -- Helper to create a radial submenu and link it to a main menu item
-GlitchLib.UI.RadialSubmenu = function(parentId, parentLabel, parentIcon, submenuId, submenuItems)
+GlitchAbst.UI.RadialSubmenu = function(parentId, parentLabel, parentIcon, submenuId, submenuItems)
     -- First register the submenu
-    GlitchLib.UI.RegisterRadial({
+    GlitchAbst.UI.RegisterRadial({
         id = submenuId,
         items = submenuItems
     })
     
     -- Then add the parent item that links to the submenu
-    return GlitchLib.UI.AddRadialItem({
+    return GlitchAbst.UI.AddRadialItem({
         id = parentId,
         label = parentLabel,
         icon = parentIcon,
@@ -824,27 +824,27 @@ end
 
 -- Skill Check System
 -- Run a skill check with defined difficulty
-GlitchLib.UI.SkillCheck = function(difficulty, inputs)
+GlitchAbst.UI.SkillCheck = function(difficulty, inputs)
     return exports['ox_lib']:skillCheck(difficulty, inputs)
 end
 
 -- Check if a skill check is currently active
-GlitchLib.UI.IsSkillCheckActive = function()
+GlitchAbst.UI.IsSkillCheckActive = function()
     return exports['ox_lib']:skillCheckActive()
 end
 
 -- Cancel the currently ongoing skill check
-GlitchLib.UI.CancelSkillCheck = function()
+GlitchAbst.UI.CancelSkillCheck = function()
     return exports['ox_lib']:cancelSkillCheck()
 end
 
 -- Helper function for creating a custom difficulty
-GlitchLib.UI.CustomDifficulty = function(areaSize, speedMultiplier)
+GlitchAbst.UI.CustomDifficulty = function(areaSize, speedMultiplier)
     return { areaSize = areaSize, speedMultiplier = speedMultiplier }
 end
 
 -- Helper function for creating a sequence of skill checks with the same input keys
-GlitchLib.UI.SkillCheckSequence = function(difficulties, inputs, onComplete, onFail)
+GlitchAbst.UI.SkillCheckSequence = function(difficulties, inputs, onComplete, onFail)
     -- Default to 'e' if no inputs provided
     inputs = inputs or {'e'}
     
@@ -854,7 +854,7 @@ GlitchLib.UI.SkillCheckSequence = function(difficulties, inputs, onComplete, onF
         local success = true
         
         while currentCheck <= #difficulties and success do
-            success = GlitchLib.UI.SkillCheck(difficulties[currentCheck], inputs)
+            success = GlitchAbst.UI.SkillCheck(difficulties[currentCheck], inputs)
             
             if success then
                 currentCheck = currentCheck + 1
@@ -874,7 +874,7 @@ GlitchLib.UI.SkillCheckSequence = function(difficulties, inputs, onComplete, onF
 end
 
 -- Convenience function for a lockpick skill check
-GlitchLib.UI.Lockpick = function(difficulty, callback)
+GlitchAbst.UI.Lockpick = function(difficulty, callback)
     if not difficulty then
         -- Default lockpicking sequence: medium -> medium -> hard
         difficulty = {'medium', 'medium', 'hard'}
@@ -884,20 +884,20 @@ GlitchLib.UI.Lockpick = function(difficulty, callback)
     end
     
     Citizen.CreateThread(function()
-        local success = GlitchLib.UI.SkillCheck(difficulty)
+        local success = GlitchAbst.UI.SkillCheck(difficulty)
         if callback then callback(success) end
         return success
     end)
 end
 
 -- Convenience function for a hack skill check
-GlitchLib.UI.Hack = function(difficulty, inputs, callback)
+GlitchAbst.UI.Hack = function(difficulty, inputs, callback)
     if not difficulty then
         -- Default hacking sequence: multiple increasing difficulties
         difficulty = {
             'easy', 
             'medium', 
-            GlitchLib.UI.CustomDifficulty(35, 1.5),
+            GlitchAbst.UI.CustomDifficulty(35, 1.5),
             'hard'
         }
     end
@@ -906,11 +906,11 @@ GlitchLib.UI.Hack = function(difficulty, inputs, callback)
     inputs = inputs or {'w', 'a', 's', 'd'}
     
     Citizen.CreateThread(function()
-        local success = GlitchLib.UI.SkillCheck(difficulty, inputs)
+        local success = GlitchAbst.UI.SkillCheck(difficulty, inputs)
         if callback then callback(success) end
         return success
     end)
 end
 
-GlitchLib.Utils.DebugLog('ox_lib UI module loaded')
+GlitchAbst.Utils.DebugLog('ox_lib UI module loaded')
 return true

@@ -28,5 +28,5 @@ server_scripts {
 }
 
 exports {
-    'GetLib'
+    'getAbstraction'
 }

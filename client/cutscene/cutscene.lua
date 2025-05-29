@@ -1,18 +1,18 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading cutscene module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading cutscene module^7")
     return false
 end
 
 -- Initialize cutscene namespace
-GlitchLib.Cutscene = GlitchLib.Cutscene or {}
+GlitchAbst.Cutscene = GlitchAbst.Cutscene or {}
 
-GlitchLib.Utils.DebugLog('Cutscene module loaded')
+GlitchAbst.Utils.DebugLog('Cutscene module loaded')
 
 local playerAppearance = {}
 
 -- Save player appearance
-GlitchLib.Cutscene.SavePlayerAppearance = function()
+GlitchAbst.Cutscene.SavePlayerAppearance = function()
     local ped = PlayerPedId()
     
     playerAppearance = {
@@ -39,9 +39,9 @@ GlitchLib.Cutscene.SavePlayerAppearance = function()
 end
 
 -- Restore player appearance
-GlitchLib.Cutscene.RestorePlayerAppearance = function()
+GlitchAbst.Cutscene.RestorePlayerAppearance = function()
     if not playerAppearance or next(playerAppearance) == nil then
-        GlitchLib.Utils.DebugLog('No saved appearance to restore')
+        GlitchAbst.Utils.DebugLog('No saved appearance to restore')
         return false
     end
     
@@ -68,7 +68,7 @@ GlitchLib.Cutscene.RestorePlayerAppearance = function()
 end
 
 -- Play a cutscene with customization options
-GlitchLib.Cutscene.Play = function(cutsceneName, options)
+GlitchAbst.Cutscene.Play = function(cutsceneName, options)
     options = options or {}
     
     -- Default options
@@ -84,7 +84,7 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
         timeoutMs = options.timeoutMs or 10000
     }
     
-    GlitchLib.Utils.DebugLog('Playing cutscene: ' .. cutsceneName)
+    GlitchAbst.Utils.DebugLog('Playing cutscene: ' .. cutsceneName)
     
     if IsCutsceneActive() then
         StopCutsceneImmediately()
@@ -92,7 +92,7 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
     
     -- Save player appearance if needed
     if config.saveAppearance then
-        GlitchLib.Cutscene.SavePlayerAppearance()
+        GlitchAbst.Cutscene.SavePlayerAppearance()
     end
     
     -- Request the cutscene
@@ -106,7 +106,7 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
     
     -- Check if cutscene loaded successfully
     if not HasCutsceneLoaded() then
-        GlitchLib.Utils.DebugLog('Cutscene failed to load: ' .. cutsceneName)
+        GlitchAbst.Utils.DebugLog('Cutscene failed to load: ' .. cutsceneName)
         if config.onEnd then config.onEnd(false) end
         return false
     end
@@ -195,17 +195,17 @@ GlitchLib.Cutscene.Play = function(cutsceneName, options)
 end
 
 -- Checks if a cutscene is currently active
-GlitchLib.Cutscene.IsActive = function()
+GlitchAbst.Cutscene.IsActive = function()
     return IsCutsceneActive()
 end
 
 -- Checks if a cutscene is currently playing
-GlitchLib.Cutscene.IsPlaying = function()
+GlitchAbst.Cutscene.IsPlaying = function()
     return IsCutscenePlaying()
 end
 
 -- Stop the current cutscene
-GlitchLib.Cutscene.Stop = function(immediate)
+GlitchAbst.Cutscene.Stop = function(immediate)
     if IsCutsceneActive() then
         if immediate then
             StopCutsceneImmediately()
@@ -218,12 +218,12 @@ GlitchLib.Cutscene.Stop = function(immediate)
 end
 
 -- Get current cutscene time (in ms)
-GlitchLib.Cutscene.GetTime = function()
+GlitchAbst.Cutscene.GetTime = function()
     return GetCutsceneTime()
 end
 
 -- Skip to a specific time in the cutscene (in ms)
-GlitchLib.Cutscene.SkipToTime = function(time)
+GlitchAbst.Cutscene.SkipToTime = function(time)
     if IsCutsceneActive() then
         SkipCutsceneToTime(time)
         return true

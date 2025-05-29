@@ -1,38 +1,38 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading ox_target module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading ox_target module^7")
     return false
 end
 
 -- Initialize target namespace
-GlitchLib.Target = GlitchLib.Target or {}
+GlitchAbst.Target = GlitchAbst.Target or {}
 
 -- Skip if target system doesn't match
 if Config and Config.TargetSystem and Config.TargetSystem ~= 'ox' and Config.TargetSystem ~= 'auto' then
-    GlitchLib.Utils.DebugLog('Skipping ox_target module (using ' .. Config.TargetSystem .. ')')
+    GlitchAbst.Utils.DebugLog('Skipping ox_target module (using ' .. Config.TargetSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
 if GetResourceState('ox_target') ~= 'started' then
-    GlitchLib.Utils.DebugLog('ox_target resource is not available')
+    GlitchAbst.Utils.DebugLog('ox_target resource is not available')
     return false
 end
 
-GlitchLib.Utils.DebugLog('ox_target module loaded')
+GlitchAbst.Utils.DebugLog('ox_target module loaded')
 
 -- Add a target entity
-GlitchLib.Target.AddTargetEntity = function(entities, options)
+GlitchAbst.Target.AddTargetEntity = function(entities, options)
     return exports.ox_target:addLocalEntity(entities, options)
 end
 
 -- Add a target model
-GlitchLib.Target.AddTargetModel = function(models, options)
+GlitchAbst.Target.AddTargetModel = function(models, options)
     return exports.ox_target:addModel(models, options)
 end
 
 -- Add a target zones                  name, center, length, width, opt, targetoptions
-GlitchLib.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
+GlitchAbst.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
     if type(arg1) == 'table' then
         local options = arg1
         return exports.ox_target:addBoxZone(options)
@@ -59,7 +59,7 @@ end
 
 
 -- Add a sphere zone
-GlitchLib.Target.AddSphereZone = function(name, center, radius, options, targetOptions)
+GlitchAbst.Target.AddSphereZone = function(name, center, radius, options, targetOptions)
     local sphereZone = {
         coords = center,
         radius = radius,
@@ -70,87 +70,87 @@ GlitchLib.Target.AddSphereZone = function(name, center, radius, options, targetO
 end
 
 -- Remove target
-GlitchLib.Target.RemoveZone = function(id)
+GlitchAbst.Target.RemoveZone = function(id)
     exports.ox_target:removeZone(id)
 end
 
 -- Add target for all players
-GlitchLib.Target.AddGlobalPlayer = function(options)
+GlitchAbst.Target.AddGlobalPlayer = function(options)
     exports.ox_target:addGlobalPlayer(options)
 end
 
 -- Add target for all vehicles
-GlitchLib.Target.AddGlobalVehicle = function(options)
+GlitchAbst.Target.AddGlobalVehicle = function(options)
     exports.ox_target:addGlobalVehicle(options)
 end
 
 -- Add target for all objects
-GlitchLib.Target.AddGlobalObject = function(options)
+GlitchAbst.Target.AddGlobalObject = function(options)
     exports.ox_target:addGlobalObject(options)
 end
 
 -- Enable/disable the targeting system
-GlitchLib.Target.DisableTargeting = function(state)
+GlitchAbst.Target.DisableTargeting = function(state)
     exports.ox_target:disableTargeting(state)
 end
 
 -- Add a global option that appears for all entities
-GlitchLib.Target.AddGlobalOption = function(options)
+GlitchAbst.Target.AddGlobalOption = function(options)
     return exports.ox_target:addGlobalOption(options)
 end
 
 -- Remove global options
-GlitchLib.Target.RemoveGlobalOption = function(optionNames)
+GlitchAbst.Target.RemoveGlobalOption = function(optionNames)
     exports.ox_target:removeGlobalOption(optionNames)
 end
 
 -- Add target for all peds (except players)
-GlitchLib.Target.AddGlobalPed = function(options)
+GlitchAbst.Target.AddGlobalPed = function(options)
     exports.ox_target:addGlobalPed(options)
 end
 
 -- Remove target for all peds
-GlitchLib.Target.RemoveGlobalPed = function(optionNames)
+GlitchAbst.Target.RemoveGlobalPed = function(optionNames)
     exports.ox_target:removeGlobalPed(optionNames)
 end
 
 -- Remove target for all players
-GlitchLib.Target.RemoveGlobalPlayer = function(optionNames)
+GlitchAbst.Target.RemoveGlobalPlayer = function(optionNames)
     exports.ox_target:removeGlobalPlayer(optionNames)
 end
 
 -- Remove target for all vehicles
-GlitchLib.Target.RemoveGlobalVehicle = function(optionNames)
+GlitchAbst.Target.RemoveGlobalVehicle = function(optionNames)
     exports.ox_target:removeGlobalVehicle(optionNames)
 end
 
 -- Remove target for all objects
-GlitchLib.Target.RemoveGlobalObject = function(optionNames)
+GlitchAbst.Target.RemoveGlobalObject = function(optionNames)
     exports.ox_target:removeGlobalObject(optionNames)
 end
 
 -- Remove target model
-GlitchLib.Target.RemoveTargetModel = function(models, optionNames)
+GlitchAbst.Target.RemoveTargetModel = function(models, optionNames)
     exports.ox_target:removeModel(models, optionNames)
 end
 
 -- Add a target entity by network ID
-GlitchLib.Target.AddNetworkedEntity = function(netIds, options)
+GlitchAbst.Target.AddNetworkedEntity = function(netIds, options)
     return exports.ox_target:addEntity(netIds, options)
 end
 
 -- Remove a networked entity target
-GlitchLib.Target.RemoveNetworkedEntity = function(netIds, optionNames)
+GlitchAbst.Target.RemoveNetworkedEntity = function(netIds, optionNames)
     exports.ox_target:removeEntity(netIds, optionNames)
 end
 
 -- Remove a local entity target
-GlitchLib.Target.RemoveLocalEntity = function(entities, optionNames)
+GlitchAbst.Target.RemoveLocalEntity = function(entities, optionNames)
     exports.ox_target:removeLocalEntity(entities, optionNames)
 end
 
 -- Add a polygon zone
-GlitchLib.Target.AddPolyZone = function(name, points, options, targetOptions)
+GlitchAbst.Target.AddPolyZone = function(name, points, options, targetOptions)
     local polyZone = {
         points = points,
         name = name,
@@ -163,7 +163,7 @@ GlitchLib.Target.AddPolyZone = function(name, points, options, targetOptions)
 end
 
 -- Add aliases for consistency with other naming conventions
-GlitchLib.Target.AddBoxTarget = GlitchLib.Target.AddBoxZone
-GlitchLib.Target.AddSphereTarget = GlitchLib.Target.AddSphereZone
-GlitchLib.Target.AddPolyTarget = GlitchLib.Target.AddPolyZone
-GlitchLib.Target.RemoveTarget = GlitchLib.Target.RemoveZone
+GlitchAbst.Target.AddBoxTarget = GlitchAbst.Target.AddBoxZone
+GlitchAbst.Target.AddSphereTarget = GlitchAbst.Target.AddSphereZone
+GlitchAbst.Target.AddPolyTarget = GlitchAbst.Target.AddPolyZone
+GlitchAbst.Target.RemoveTarget = GlitchAbst.Target.RemoveZone

@@ -1,5 +1,5 @@
-if GlitchLib.FrameworkName ~= 'ESX' then
-    GlitchLib.Utils.DebugLog('Skipping ESX UI module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+if GlitchAbst.FrameworkName ~= 'ESX' then
+    GlitchAbst.Utils.DebugLog('Skipping ESX UI module (using ' .. (GlitchAbst.FrameworkName or 'unknown') .. ')')
     return false
 end
 
@@ -11,10 +11,10 @@ end)
 
 -- Define the initialization function BEFORE calling it
 local function InitializeESXUI(eSXObj)
-    GlitchLib.Utils.DebugLog('ESX UI module loaded')
+    GlitchAbst.Utils.DebugLog('ESX UI module loaded')
     
     -- Basic menu functions
-    GlitchLib.UI.ShowMenu = function(params)
+    GlitchAbst.UI.ShowMenu = function(params)
         -- Implementation depends on your ESX menu system
         -- This is a placeholder based on common ESX menu patterns
         if ESX.UI.Menu then
@@ -43,19 +43,19 @@ local function InitializeESXUI(eSXObj)
     end
     
     -- Close all menus
-    GlitchLib.UI.CloseMenu = function()
+    GlitchAbst.UI.CloseMenu = function()
         if ESX.UI.Menu then
             ESX.UI.Menu.CloseAll()
         end
     end
     
     -- Show HUD elements
-    GlitchLib.UI.ShowHUD = function(elements)
+    GlitchAbst.UI.ShowHUD = function(elements)
         -- Implementation depends on your HUD system
     end
     
     -- Hide HUD elements
-    GlitchLib.UI.HideHUD = function(elements)
+    GlitchAbst.UI.HideHUD = function(elements)
         -- Implementation depends on your HUD system
     end
 end

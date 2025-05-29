@@ -1,28 +1,28 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading qb-target module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading qb-target module^7")
     return false
 end
 
 -- Initialize target namespace
-GlitchLib.Target = GlitchLib.Target or {}
+GlitchAbst.Target = GlitchAbst.Target or {}
 
 -- Skip if target system doesn't match
 if Config and Config.TargetSystem and Config.TargetSystem ~= 'qb' and Config.TargetSystem ~= 'auto' then
-    GlitchLib.Utils.DebugLog('Skipping qb-target module (using ' .. Config.TargetSystem .. ')')
+    GlitchAbst.Utils.DebugLog('Skipping qb-target module (using ' .. Config.TargetSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
 if GetResourceState('qb-target') ~= 'started' then
-    GlitchLib.Utils.DebugLog('qb-target resource is not available')
+    GlitchAbst.Utils.DebugLog('qb-target resource is not available')
     return false
 end
 
-GlitchLib.Utils.DebugLog('qb-target module loaded')
+GlitchAbst.Utils.DebugLog('qb-target module loaded')
 
 -- Add a target entity
-GlitchLib.Target.AddTargetEntity = function(entities, options)
+GlitchAbst.Target.AddTargetEntity = function(entities, options)
     return exports['qb-target']:AddTargetEntity(entities, {
         options = options,
         distance = options[1].distance or 2.5
@@ -30,7 +30,7 @@ GlitchLib.Target.AddTargetEntity = function(entities, options)
 end
 
 -- Add a target model
-GlitchLib.Target.AddTargetModel = function(models, options)
+GlitchAbst.Target.AddTargetModel = function(models, options)
     return exports['qb-target']:AddTargetModel(models, {
         options = options,
         distance = options[1].distance or 2.5
@@ -38,7 +38,7 @@ GlitchLib.Target.AddTargetModel = function(models, options)
 end
 
 -- Add a box zone
-GlitchLib.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
+GlitchAbst.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
     local name, center, length, width, options, targetOptions
     
     if type(arg1) == 'table' then
@@ -116,7 +116,7 @@ GlitchLib.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
 end
 
 -- Add a sphere zone
-GlitchLib.Target.AddSphereZone = function(name, center, radius, options, targetOptions)
+GlitchAbst.Target.AddSphereZone = function(name, center, radius, options, targetOptions)
     return exports['qb-target']:AddSphereZone(name, center, radius, {
         name = name,
         debugPoly = options.debugPoly or false
@@ -127,12 +127,12 @@ GlitchLib.Target.AddSphereZone = function(name, center, radius, options, targetO
 end
 
 -- Remove zone
-GlitchLib.Target.RemoveZone = function(name)
+GlitchAbst.Target.RemoveZone = function(name)
     exports['qb-target']:RemoveZone(name)
 end
 
 -- Add target for all players
-GlitchLib.Target.AddGlobalPlayer = function(options)
+GlitchAbst.Target.AddGlobalPlayer = function(options)
     exports['qb-target']:AddGlobalPlayer({
         options = options,
         distance = options[1].distance or 2.5
@@ -140,7 +140,7 @@ GlitchLib.Target.AddGlobalPlayer = function(options)
 end
 
 -- Add target for all vehicles
-GlitchLib.Target.AddGlobalVehicle = function(options)
+GlitchAbst.Target.AddGlobalVehicle = function(options)
     exports['qb-target']:AddGlobalVehicle({
         options = options,
         distance = options[1].distance or 2.5
@@ -148,7 +148,7 @@ GlitchLib.Target.AddGlobalVehicle = function(options)
 end
 
 -- Add target for all objects
-GlitchLib.Target.AddGlobalObject = function(options)
+GlitchAbst.Target.AddGlobalObject = function(options)
     exports['qb-target']:AddGlobalObject({
         options = options,
         distance = options[1].distance or 2.5

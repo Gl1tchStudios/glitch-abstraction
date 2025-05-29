@@ -1,5 +1,5 @@
 -- esx_doorlock Server
-GlitchLib.Utils.DebugLog('esx_doorlock server module loaded')
+GlitchAbst.Utils.DebugLog('esx_doorlock server module loaded')
 
 local ESX = exports['es_extended']:getSharedObject()
 
@@ -9,12 +9,12 @@ local function IsResourceAvailable(resourceName)
 end
 
 if not IsResourceAvailable('esx_doorlock') then
-    GlitchLib.Utils.DebugLog('WARNING: esx_doorlock resource is not available')
+    GlitchAbst.Utils.DebugLog('WARNING: esx_doorlock resource is not available')
     
-    GlitchLib.DoorLock.GetDoorState = function(door) return nil end
-    GlitchLib.DoorLock.SetDoorState = function(door, state, source) return false end
-    GlitchLib.DoorLock.PlayerHasAccess = function(source, door) return false end
-    GlitchLib.DoorLock.GetAllDoors = function() return {} end
+    GlitchAbst.DoorLock.GetDoorState = function(door) return nil end
+    GlitchAbst.DoorLock.SetDoorState = function(door, state, source) return false end
+    GlitchAbst.DoorLock.PlayerHasAccess = function(source, door) return false end
+    GlitchAbst.DoorLock.GetAllDoors = function() return {} end
     
     return  -- Exit early
 end
@@ -31,7 +31,7 @@ local function GetDoors()
         end)
         
         if success and result then
-            GlitchLib.Utils.DebugLog('Successfully got doors using export: ' .. exportName)
+            GlitchAbst.Utils.DebugLog('Successfully got doors using export: ' .. exportName)
             return result
         end
     end
@@ -52,17 +52,17 @@ local function GetDoors()
     end
     
     if eventDoors then
-        GlitchLib.Utils.DebugLog('Successfully got doors using event')
+        GlitchAbst.Utils.DebugLog('Successfully got doors using event')
         return eventDoors
     end
     
     -- Last resort - try to access _G.doorList which some versions use
     if _G.doorList then
-        GlitchLib.Utils.DebugLog('Using global doorList variable')
+        GlitchAbst.Utils.DebugLog('Using global doorList variable')
         return _G.doorList
     end
     
-    GlitchLib.Utils.DebugLog('ERROR: Failed to get doors from esx_doorlock')
+    GlitchAbst.Utils.DebugLog('ERROR: Failed to get doors from esx_doorlock')
     return {}
 end
 
@@ -73,7 +73,7 @@ doors = GetDoors()
 local doorCache = doors or {}
 
 -- Door lock functions
-GlitchLib.DoorLock.GetDoorState = function(door)
+GlitchAbst.DoorLock.GetDoorState = function(door)
     if type(door) == 'number' and doorCache[door] then
         return doorCache[door].locked
     elseif type(door) == 'string' then
@@ -87,7 +87,7 @@ GlitchLib.DoorLock.GetDoorState = function(door)
     return nil
 end
 
-GlitchLib.DoorLock.SetDoorState = function(door, state, playerId)
+GlitchAbst.DoorLock.SetDoorState = function(door, state, playerId)
     local doorId = door
     if type(door) == 'string' then
         -- Try to find door by name
@@ -107,7 +107,7 @@ GlitchLib.DoorLock.SetDoorState = function(door, state, playerId)
     return false
 end
 
-GlitchLib.DoorLock.PlayerHasAccess = function(source, door)
+GlitchAbst.DoorLock.PlayerHasAccess = function(source, door)
     local doorId = door
     if type(door) == 'string' then
         -- Try to find door by name
@@ -155,18 +155,18 @@ GlitchLib.DoorLock.PlayerHasAccess = function(source, door)
     return false
 end
 
-GlitchLib.DoorLock.GetAllDoors = function()
+GlitchAbst.DoorLock.GetAllDoors = function()
     return doorCache
 end
 
-GlitchLib.DoorLock.AddDoor = function(door)
-    GlitchLib.Utils.DebugLog('Adding new doors in esx_doorlock requires manual config update')
+GlitchAbst.DoorLock.AddDoor = function(door)
+    GlitchAbst.Utils.DebugLog('Adding new doors in esx_doorlock requires manual config update')
     return false
 end
 
-GlitchLib.DoorLock.RemoveDoor = function(door)
-    GlitchLib.Utils.DebugLog('Removing doors in esx_doorlock requires manual config update')
+GlitchAbst.DoorLock.RemoveDoor = function(door)
+    GlitchAbst.Utils.DebugLog('Removing doors in esx_doorlock requires manual config update')
     return false
 end
 
-GlitchLib.Utils.DebugLog('ESX Doorlock module loaded')
+GlitchAbst.Utils.DebugLog('ESX Doorlock module loaded')

@@ -1,25 +1,25 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading ESX notifications module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading ESX notifications module^7")
     return false
 end
 
 -- Initialize notifications namespace
-GlitchLib.Notifications = GlitchLib.Notifications or {}
+GlitchAbst.Notifications = GlitchAbst.Notifications or {}
 
 -- Skip if notification system doesn't match
 if Config and Config.NotificationSystem and Config.NotificationSystem ~= 'esx' and Config.NotificationSystem ~= 'auto' then
-    GlitchLib.Utils.DebugLog('Skipping ESX notifications module (using ' .. Config.NotificationSystem .. ')')
+    GlitchAbst.Utils.DebugLog('Skipping ESX notifications module (using ' .. Config.NotificationSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
 if GetResourceState('es_extended') ~= 'started' then
-    GlitchLib.Utils.DebugLog('es_extended resource is not available')
+    GlitchAbst.Utils.DebugLog('es_extended resource is not available')
     return false
 end
 
-GlitchLib.Utils.DebugLog('ESX notifications module loaded')
+GlitchAbst.Utils.DebugLog('ESX notifications module loaded')
 
 -- Safe way to get ESX
 local ESX = nil
@@ -34,7 +34,7 @@ local nextESXNotificationId = 1
 -- Define the initialization function BEFORE calling it
 local function InitializeESXNotifications(eSXObj)
     -- Basic notification
-    GlitchLib.Notifications.Show = function(params)
+    GlitchAbst.Notifications.Show = function(params)
         eSXObj.ShowNotification(params.description or params.message or params.title)
         
         -- Create a pseudo-ID for this notification
@@ -51,32 +51,32 @@ local function InitializeESXNotifications(eSXObj)
     end
     
     -- Success notification
-    GlitchLib.Notifications.Success = function(title, message, duration)
-        return GlitchLib.Notifications.Show({
+    GlitchAbst.Notifications.Success = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({
             title = title,
             description = message
         })
     end
     
     -- Error notification
-    GlitchLib.Notifications.Error = function(title, message, duration)
-        return GlitchLib.Notifications.Show({
+    GlitchAbst.Notifications.Error = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({
             title = title,
             description = message
         })
     end
     
     -- Info notification
-    GlitchLib.Notifications.Info = function(title, message, duration)
-        return GlitchLib.Notifications.Show({
+    GlitchAbst.Notifications.Info = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({
             title = title,
             description = message
         })
     end
     
     -- Warning notification
-    GlitchLib.Notifications.Warning = function(title, message, duration)
-        return GlitchLib.Notifications.Show({
+    GlitchAbst.Notifications.Warning = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({
             title = title,
             description = message
         })
@@ -85,23 +85,23 @@ local function InitializeESXNotifications(eSXObj)
     -- Advanced notification functions (ESX has limited support)
     
     -- Add box to an existing notification (not supported in ESX)
-    GlitchLib.Notifications.AddBox = function(notificationId, title, message, color)
+    GlitchAbst.Notifications.AddBox = function(notificationId, title, message, color)
         -- ESX doesn't support adding boxes to notifications
         -- Show a new notification instead
-        return GlitchLib.Notifications.Show({
+        return GlitchAbst.Notifications.Show({
             title = title,
             description = message
         })
     end
     
     -- Remove a specific box from a notification (not supported in ESX)
-    GlitchLib.Notifications.RemoveBox = function(notificationId, boxId)
+    GlitchAbst.Notifications.RemoveBox = function(notificationId, boxId)
         -- Not supported in ESX
         return false
     end
     
     -- Remove an entire notification (not supported in ESX)
-    GlitchLib.Notifications.Remove = function(notificationId)
+    GlitchAbst.Notifications.Remove = function(notificationId)
         -- ESX doesn't support removing notifications
         -- Just mark it as removed in our tracking
         if activeESXNotifications[notificationId] then
@@ -112,27 +112,27 @@ local function InitializeESXNotifications(eSXObj)
     end
     
     -- Update content of a notification (not supported in ESX)
-    GlitchLib.Notifications.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
+    GlitchAbst.Notifications.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
         -- ESX doesn't support updating notifications
         -- Show a new one instead
-        return GlitchLib.Notifications.Show({
+        return GlitchAbst.Notifications.Show({
             title = newTitle,
             description = newMessage
         })
     end
     
     -- Toggle a notification (not supported in ESX)
-    GlitchLib.Notifications.Toggle = function(id, title, message, color)
+    GlitchAbst.Notifications.Toggle = function(id, title, message, color)
         -- Just show a new notification
-        return GlitchLib.Notifications.Show({
+        return GlitchAbst.Notifications.Show({
             title = title,
             description = message
         })
     end
     
     -- Mirror function to UI namespace for backward compatibility
-    GlitchLib.UI.Notify = function(params)
-        return GlitchLib.Notifications.Show(params)
+    GlitchAbst.UI.Notify = function(params)
+        return GlitchAbst.Notifications.Show(params)
     end
 end
 

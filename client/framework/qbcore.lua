@@ -1,23 +1,23 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading QBCore framework module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading QBCore framework module^7")
     return false
 end
 
 -- Skip if framework doesn't match
-if GlitchLib.FrameworkName and GlitchLib.FrameworkName ~= 'QBCore' then
-    GlitchLib.Utils.DebugLog('Skipping QBCore module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+if GlitchAbst.FrameworkName and GlitchAbst.FrameworkName ~= 'QBCore' then
+    GlitchAbst.Utils.DebugLog('Skipping QBCore module (using ' .. (GlitchAbst.FrameworkName or 'unknown') .. ')')
     return false
 end
 
 -- Check if resource is actually available
 if GetResourceState('qb-core') ~= 'started' then
-    GlitchLib.Utils.DebugLog('qb-core resource is not available')
+    GlitchAbst.Utils.DebugLog('qb-core resource is not available')
     return false
 end
 
 -- Initialize framework modules
-GlitchLib.Framework = GlitchLib.Framework or {}
+GlitchAbst.Framework = GlitchAbst.Framework or {}
 
 -- QBCore Client Implementation
 local QBCore = nil
@@ -26,30 +26,30 @@ local success, result = pcall(function()
 end)
 
 if not success or not result then
-    GlitchLib.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore integration')
+    GlitchAbst.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore integration')
     return false
 end
 
 QBCore = result
-GlitchLib.Framework.QBCore = QBCore
-GlitchLib.Framework.Type = 'QBCore'
-GlitchLib.Utils.DebugLog('QBCore framework module loaded')
+GlitchAbst.Framework.QBCore = QBCore
+GlitchAbst.Framework.Type = 'QBCore'
+GlitchAbst.Utils.DebugLog('QBCore framework module loaded')
 
 -- Player data
-GlitchLib.Framework.GetPlayerData = function()
+GlitchAbst.Framework.GetPlayerData = function()
     return QBCore.Functions.GetPlayerData()
 end
 
 -- Callbacks
-GlitchLib.Framework.TriggerCallback = function(name, cb, ...)
+GlitchAbst.Framework.TriggerCallback = function(name, cb, ...)
     QBCore.Functions.TriggerCallback(name, cb, ...)
 end
 
 -- Notifications
-GlitchLib.Framework.Notify = function(message, type, duration)
-    if GlitchLib.Notifications and GlitchLib.Notifications.Type then
+GlitchAbst.Framework.Notify = function(message, type, duration)
+    if GlitchAbst.Notifications and GlitchAbst.Notifications.Type then
         -- Use the notifications system if available
-        GlitchLib.Notifications.Show({
+        GlitchAbst.Notifications.Show({
             description = message,
             type = type or 'info',
             duration = duration or 5000
@@ -61,14 +61,14 @@ GlitchLib.Framework.Notify = function(message, type, duration)
 end
 
 -- Help notifications
-GlitchLib.Framework.ShowHelpNotification = function(message, thisFrame)
+GlitchAbst.Framework.ShowHelpNotification = function(message, thisFrame)
     if thisFrame == nil then thisFrame = false end
     AddTextEntry('qbHelpNotification', message)
     DisplayHelpTextThisFrame('qbHelpNotification', thisFrame)
 end
 
 -- Player functions
-GlitchLib.Framework.SpawnPlayer = function(coords, callback)
+GlitchAbst.Framework.SpawnPlayer = function(coords, callback)
     QBCore.Functions.GetPlayerData(function(PlayerData)
         if PlayerData.metadata["isdead"] or PlayerData.metadata["inlaststand"] then
             -- Player is dead, handle respawn logic
@@ -96,7 +96,7 @@ GlitchLib.Framework.SpawnPlayer = function(coords, callback)
 end
 
 -- UI functions
-GlitchLib.Framework.DrawText = function(x, y, text)
+GlitchAbst.Framework.DrawText = function(x, y, text)
     SetTextScale(0.35, 0.35)
     SetTextFont(4)
     SetTextProportional(1)
@@ -112,7 +112,7 @@ GlitchLib.Framework.DrawText = function(x, y, text)
 end
 
 -- 3D text
-GlitchLib.Framework.Draw3DText = function(coords, text)
+GlitchAbst.Framework.Draw3DText = function(coords, text)
     local onScreen, _x, _y = World3dToScreen2d(coords.x, coords.y, coords.z)
     local pX, pY, pZ = table.unpack(GetGameplayCamCoords())
 
@@ -130,7 +130,7 @@ GlitchLib.Framework.Draw3DText = function(coords, text)
 end
 
 -- Get closest player
-GlitchLib.Framework.GetClosestPlayer = function()
+GlitchAbst.Framework.GetClosestPlayer = function()
     local pedCoords = GetEntityCoords(PlayerPedId())
     local closestPlayers = QBCore.Functions.GetPlayersFromCoords()
     local closestDistance = -1
@@ -152,14 +152,14 @@ GlitchLib.Framework.GetClosestPlayer = function()
 end
 
 -- Vehicle functions
-GlitchLib.Framework.GetVehicleProperties = function(vehicle)
+GlitchAbst.Framework.GetVehicleProperties = function(vehicle)
     if DoesEntityExist(vehicle) then
         return QBCore.Functions.GetVehicleProperties(vehicle)
     end
     return nil
 end
 
-GlitchLib.Framework.SetVehicleProperties = function(vehicle, props)
+GlitchAbst.Framework.SetVehicleProperties = function(vehicle, props)
     if DoesEntityExist(vehicle) and props then
         QBCore.Functions.SetVehicleProperties(vehicle, props)
         return true

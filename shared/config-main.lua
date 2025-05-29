@@ -4,17 +4,17 @@ Config.Debug = true
 
 Config.UseFramework = 'auto'  -- Options: 'ESX', 'QBCore', 'auto'
 
--- Initialize GlitchLib globals BEFORE thread execution
-GlitchLib = GlitchLib or {}
-GlitchLib.Utils = GlitchLib.Utils or {}
-GlitchLib.Framework = GlitchLib.Framework or {}
-GlitchLib.Notifications = GlitchLib.Notifications or {}
-GlitchLib.UI = GlitchLib.UI or {}
+-- Initialize GlitchAbst globals BEFORE thread execution
+GlitchAbst = GlitchAbst or {}
+GlitchAbst.Utils = GlitchAbst.Utils or {}
+GlitchAbst.Framework = GlitchAbst.Framework or {}
+GlitchAbst.Notifications = GlitchAbst.Notifications or {}
+GlitchAbst.UI = GlitchAbst.UI or {}
 
 -- Debug function needed right away
-GlitchLib.Utils.DebugLog = function(message)
+GlitchAbst.Utils.DebugLog = function(message)
     if Config.Debug then
-        print('[GlitchLib] ' .. message)
+        print('[GlitchAbst] ' .. message)
     end
 end
 
@@ -24,7 +24,7 @@ local function DetectFramework()
     local detected = nil
     
     if configFramework ~= 'auto' then
-        GlitchLib.Utils.DebugLog('Using configured framework: ' .. configFramework)
+        GlitchAbst.Utils.DebugLog('Using configured framework: ' .. configFramework)
         return configFramework
     end
     
@@ -35,9 +35,9 @@ local function DetectFramework()
     end
     
     if detected then
-        GlitchLib.Utils.DebugLog('Auto-detected framework: ' .. detected)
+        GlitchAbst.Utils.DebugLog('Auto-detected framework: ' .. detected)
     else
-        GlitchLib.Utils.DebugLog('WARNING: No supported framework detected!')
+        GlitchAbst.Utils.DebugLog('WARNING: No supported framework detected!')
         detected = 'unknown'
     end
     
@@ -45,7 +45,7 @@ local function DetectFramework()
 end
 
 -- Store detected framework globally
-GlitchLib.FrameworkName = DetectFramework()
+GlitchAbst.FrameworkName = DetectFramework()
 
 -- Function to detect UI system
 local function DetectUISystem()
@@ -53,7 +53,7 @@ local function DetectUISystem()
     local detected = nil
     
     if configUI ~= 'auto' then
-        GlitchLib.Utils.DebugLog('Using configured UI system: ' .. configUI)
+        GlitchAbst.Utils.DebugLog('Using configured UI system: ' .. configUI)
         return configUI
     end
     
@@ -68,21 +68,21 @@ local function DetectUISystem()
     end
     
     -- Fall back to detected framework if no UI system is found
-    if not detected and GlitchLib.FrameworkName and GlitchLib.FrameworkName ~= 'unknown' then
-        detected = string.lower(GlitchLib.FrameworkName)
+    if not detected and GlitchAbst.FrameworkName and GlitchAbst.FrameworkName ~= 'unknown' then
+        detected = string.lower(GlitchAbst.FrameworkName)
     end
     
     if detected then
-        GlitchLib.Utils.DebugLog('Auto-detected UI system: ' .. detected)
+        GlitchAbst.Utils.DebugLog('Auto-detected UI system: ' .. detected)
     else
-        GlitchLib.Utils.DebugLog('WARNING: No UI system detected, using default')
+        GlitchAbst.Utils.DebugLog('WARNING: No UI system detected, using default')
         detected = 'ox' -- Default fallback
     end
     
     return detected
 end
 
-GlitchLib.UISystem = DetectUISystem()
+GlitchAbst.UISystem = DetectUISystem()
 
 -- Frameworks our library supports
 Config.Framework = {

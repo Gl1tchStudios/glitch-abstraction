@@ -1,31 +1,31 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading pickle_xp progression module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading pickle_xp progression module^7")
     return false
 end
 
 -- Initialize progression namespace
-GlitchLib.Progression = GlitchLib.Progression or {}
+GlitchAbst.Progression = GlitchAbst.Progression or {}
 
 -- Skip if XP system doesn't match
 if Config and Config.xpSystem and Config.xpSystem ~= 'pickle_xp' then
-    GlitchLib.Utils.DebugLog('Skipping pickle_xp module (using ' .. Config.xpSystem .. ' instead)')
+    GlitchAbst.Utils.DebugLog('Skipping pickle_xp module (using ' .. Config.xpSystem .. ' instead)')
     return false
 end
 
 -- Check if resource is actually available
 if GetResourceState('pickle_xp') ~= 'started' then
-    GlitchLib.Utils.DebugLog('pickle_xp resource is not available')
+    GlitchAbst.Utils.DebugLog('pickle_xp resource is not available')
     return false
 end
 
-GlitchLib.Utils.DebugLog('pickle_xp progression module loaded')
+GlitchAbst.Utils.DebugLog('pickle_xp progression module loaded')
 
 -- pickle_xp Client
-GlitchLib.Utils.DebugLog('pickle_xp client module loaded')
+GlitchAbst.Utils.DebugLog('pickle_xp client module loaded')
 
 -- Get current XP
-GlitchLib.Progression.GetXP = function(name)
+GlitchAbst.Progression.GetXP = function(name)
     if not name then
         return exports.pickle_xp:GetXP()
     end
@@ -33,7 +33,7 @@ GlitchLib.Progression.GetXP = function(name)
 end
 
 -- Get current level
-GlitchLib.Progression.GetLevel = function(name)
+GlitchAbst.Progression.GetLevel = function(name)
     if name then
         return exports.pickle_xp:GetLevel(name)
     else
@@ -42,7 +42,7 @@ GlitchLib.Progression.GetLevel = function(name)
 end
 
 -- Draw XP bar
-GlitchLib.Progression.DrawXPBar = function(show)
+GlitchAbst.Progression.DrawXPBar = function(show)
     if show then
         exports.pickle_xp:DrawXPBar()
     else
@@ -51,23 +51,23 @@ GlitchLib.Progression.DrawXPBar = function(show)
 end
 
 -- Get rank data (ranks, current rank, next rank)
-GlitchLib.Progression.GetRankData = function()
+GlitchAbst.Progression.GetRankData = function()
     return exports.pickle_xp:GetRankData()
 end
 
 -- Get user data (level, xp, rankLevel)
-GlitchLib.Progression.GetUserData = function()
+GlitchAbst.Progression.GetUserData = function()
     return exports.pickle_xp:GetUserData()
 end
 
 -- Check if player has a specific rank
-GlitchLib.Progression.HasRank = function(rank)
+GlitchAbst.Progression.HasRank = function(rank)
     if not rank then return false end
     return exports.pickle_xp:HasRank(rank)
 end
 
 -- Toggle rank visibility
-GlitchLib.Progression.ShowRank = function(state)
+GlitchAbst.Progression.ShowRank = function(state)
     if state then
         exports.pickle_xp:ShowRank()
     else
@@ -76,18 +76,18 @@ GlitchLib.Progression.ShowRank = function(state)
 end
 
 -- Get XP data for all categories
-GlitchLib.Progression.GetXPData = function()
+GlitchAbst.Progression.GetXPData = function()
     return exports.pickle_xp:GetXPData()
 end
 
 -- Get required XP for a specific level in a category (shared function)
-GlitchLib.Progression.GetLevelXP = function(name, level)
+GlitchAbst.Progression.GetLevelXP = function(name, level)
     if not name or not level then return 0 end
     return exports.pickle_xp:GetLevelXP(name, level)
 end
 
 -- Get current level of a category (shared function)
-GlitchLib.Progression.GetCategoryLevel = function(name)
+GlitchAbst.Progression.GetCategoryLevel = function(name)
     if not name then return 0 end
     return exports.pickle_xp:GetCategoryLevel(name)
 end

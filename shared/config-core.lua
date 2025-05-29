@@ -1,5 +1,5 @@
 -- Core initialization file
-_G.GlitchLib = {
+_G.GlitchAbst = {
     Framework = {},      -- Framework functions
     UI = {},             -- UI functions
     Target = {},         -- Target functions
@@ -57,8 +57,8 @@ if not _G.Config then
 end
 
 -- Add debug utility function so it's available immediately
-GlitchLib.Utils.DebugLog = function(message)
+GlitchAbst.Utils.DebugLog = function(message)
     if Config and Config.Debug then
-        print('[GlitchLib] ' .. message)
+        print('[GlitchAbst] ' .. message)
     end
 end

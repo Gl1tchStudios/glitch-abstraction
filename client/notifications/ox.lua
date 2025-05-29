@@ -1,26 +1,26 @@
--- ox_lib notification module for GlitchLib
+-- ox_lib notification module for GlitchAbst
 
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading ox notifications module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading ox notifications module^7")
     return false
 end
 
-GlitchLib.Notifications = GlitchLib.Notifications or {}
-GlitchLib.Notifications.Ox = GlitchLib.Notifications.Ox or {}
+GlitchAbst.Notifications = GlitchAbst.Notifications or {}
+GlitchAbst.Notifications.Ox = GlitchAbst.Notifications.Ox or {}
 
 if Config and Config.NotificationSystem and Config.NotificationSystem ~= 'ox' and Config.NotificationSystem ~= 'auto' then
-    GlitchLib.Utils.DebugLog('Skipping ox notifications module (using ' .. Config.NotificationSystem .. ')')
+    GlitchAbst.Utils.DebugLog('Skipping ox notifications module (using ' .. Config.NotificationSystem .. ')')
     return false
 end
 
 if GetResourceState('ox_lib') ~= 'started' then
-    GlitchLib.Utils.DebugLog('ox_lib resource is not available')
+    GlitchAbst.Utils.DebugLog('ox_lib resource is not available')
     return false
 end
 
 -- Setup notification methods
-GlitchLib.Notifications.Ox.Show = function(params)
+GlitchAbst.Notifications.Ox.Show = function(params)
     if not params then return end
     
     params = type(params) == 'table' and params or {message = tostring(params)}
@@ -46,109 +46,109 @@ GlitchLib.Notifications.Ox.Show = function(params)
 end
 
 -- Main notification functions
-GlitchLib.Notifications.Show = function(params)
-    return GlitchLib.Notifications.Ox.Show(params)
+GlitchAbst.Notifications.Show = function(params)
+    return GlitchAbst.Notifications.Ox.Show(params)
 end
 
-GlitchLib.Notifications.Ox.Success = function(title, message, duration, options)
+GlitchAbst.Notifications.Ox.Success = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'success'
     options.duration = duration
-    return GlitchLib.Notifications.Ox.Show(options)
+    return GlitchAbst.Notifications.Ox.Show(options)
 end
 
-GlitchLib.Notifications.Ox.Error = function(title, message, duration, options)
+GlitchAbst.Notifications.Ox.Error = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'error'
     options.duration = duration
-    return GlitchLib.Notifications.Ox.Show(options)
+    return GlitchAbst.Notifications.Ox.Show(options)
 end
 
-GlitchLib.Notifications.Ox.Info = function(title, message, duration, options)
+GlitchAbst.Notifications.Ox.Info = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'inform'
     options.duration = duration
-    return GlitchLib.Notifications.Ox.Show(options)
+    return GlitchAbst.Notifications.Ox.Show(options)
 end
 
-GlitchLib.Notifications.Ox.Warning = function(title, message, duration, options)
+GlitchAbst.Notifications.Ox.Warning = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'warning'
     options.duration = duration
-    return GlitchLib.Notifications.Ox.Show(options)
+    return GlitchAbst.Notifications.Ox.Show(options)
 end
 
 -- Top-level convenience methods
-GlitchLib.Notifications.Success = function(title, message, duration, options)
+GlitchAbst.Notifications.Success = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'success'
     options.duration = duration
-    return GlitchLib.Notifications.Show(options)
+    return GlitchAbst.Notifications.Show(options)
 end
 
-GlitchLib.Notifications.Error = function(title, message, duration, options)
+GlitchAbst.Notifications.Error = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'error'
     options.duration = duration
-    return GlitchLib.Notifications.Show(options)
+    return GlitchAbst.Notifications.Show(options)
 end
 
-GlitchLib.Notifications.Info = function(title, message, duration, options)
+GlitchAbst.Notifications.Info = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'inform'
     options.duration = duration
-    return GlitchLib.Notifications.Show(options)
+    return GlitchAbst.Notifications.Show(options)
 end
 
-GlitchLib.Notifications.Warning = function(title, message, duration, options)
+GlitchAbst.Notifications.Warning = function(title, message, duration, options)
     options = options or {}
     options.title = title
     options.message = message
     options.type = 'warning'
     options.duration = duration
-    return GlitchLib.Notifications.Show(options)
+    return GlitchAbst.Notifications.Show(options)
 end
 
 -- Style-focused notifications
-GlitchLib.Notifications.Ox.Custom = function(params)
-    return GlitchLib.Notifications.Ox.Show(params)
+GlitchAbst.Notifications.Ox.Custom = function(params)
+    return GlitchAbst.Notifications.Ox.Show(params)
 end
 
 -- Sound notification
-GlitchLib.Notifications.Ox.WithSound = function(params, soundBank, soundSet, soundName)
+GlitchAbst.Notifications.Ox.WithSound = function(params, soundBank, soundSet, soundName)
     params.sound = {
         bank = soundBank,
         set = soundSet,
         name = soundName
     }
-    return GlitchLib.Notifications.Ox.Show(params)
+    return GlitchAbst.Notifications.Ox.Show(params)
 end
 
 -- Animated icon notification
-GlitchLib.Notifications.Ox.WithAnimation = function(params, animation, iconAlign)
+GlitchAbst.Notifications.Ox.WithAnimation = function(params, animation, iconAlign)
     params.iconAnimation = animation
     params.alignIcon = iconAlign or 'center'
-    return GlitchLib.Notifications.Ox.Show(params)
+    return GlitchAbst.Notifications.Ox.Show(params)
 end
 
 -- For backward compatibility
-GlitchLib.UI.Notify = function(params)
-    return GlitchLib.Notifications.Show(params)
+GlitchAbst.UI.Notify = function(params)
+    return GlitchAbst.Notifications.Show(params)
 end
 
-GlitchLib.Utils.DebugLog('ox_lib notifications module loaded')
+GlitchAbst.Utils.DebugLog('ox_lib notifications module loaded')
 return true

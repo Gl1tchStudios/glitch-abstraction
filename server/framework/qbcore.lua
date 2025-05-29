@@ -1,5 +1,5 @@
-if GlitchLib.FrameworkName ~= 'QBCore' then
-    GlitchLib.Utils.DebugLog('Skipping QBCore server framework module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+if GlitchAbst.FrameworkName ~= 'QBCore' then
+    GlitchAbst.Utils.DebugLog('Skipping QBCore server framework module (using ' .. (GlitchAbst.FrameworkName or 'unknown') .. ')')
     return false
 end
 
@@ -9,39 +9,39 @@ local success, result = pcall(function()
 end)
 
 if not success or not result then
-    GlitchLib.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore integration')
+    GlitchAbst.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore integration')
     return false
 end
 
 QBCore = result
-GlitchLib.Framework.QBCore = QBCore
-GlitchLib.Framework.Type = 'QBCore'
-GlitchLib.Utils.DebugLog('QBCore server framework module loaded')
+GlitchAbst.Framework.QBCore = QBCore
+GlitchAbst.Framework.Type = 'QBCore'
+GlitchAbst.Utils.DebugLog('QBCore server framework module loaded')
 
 -- Framework Functions
 
 -- Get all online players
-GlitchLib.Framework.GetPlayers = function()
+GlitchAbst.Framework.GetPlayers = function()
     return QBCore.Functions.GetPlayers()
 end
 
 -- Get player by server ID
-GlitchLib.Framework.GetPlayer = function(source)
+GlitchAbst.Framework.GetPlayer = function(source)
     return QBCore.Functions.GetPlayer(source)
 end
 
 -- Register a server callback
-GlitchLib.Framework.RegisterCallback = function(name, cb)
+GlitchAbst.Framework.RegisterCallback = function(name, cb)
     QBCore.Functions.CreateCallback(name, cb)
 end
 
 -- Get player from identifier
-GlitchLib.Framework.GetPlayerFromIdentifier = function(identifier)
+GlitchAbst.Framework.GetPlayerFromIdentifier = function(identifier)
     return QBCore.Functions.GetPlayerByCitizenId(identifier)
 end
 
 -- Money Management
-GlitchLib.Framework.GetMoney = function(source)
+GlitchAbst.Framework.GetMoney = function(source)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
         return player.Functions.GetMoney('cash')
@@ -49,11 +49,11 @@ GlitchLib.Framework.GetMoney = function(source)
     return 0
 end
 
-GlitchLib.Framework.AddMoney = function(source, amount)
+GlitchAbst.Framework.AddMoney = function(source, amount)
     print('addMoney from lib', source, amount)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
-        player.Functions.AddMoney('cash', amount, 'GlitchLib AddMoney')
+        player.Functions.AddMoney('cash', amount, 'GlitchAbst AddMoney')
         return true
     else
         print('player false')
@@ -61,16 +61,16 @@ GlitchLib.Framework.AddMoney = function(source, amount)
     return false
 end
 
-GlitchLib.Framework.RemoveMoney = function(source, amount)
+GlitchAbst.Framework.RemoveMoney = function(source, amount)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
-        player.Functions.RemoveMoney('cash', amount, 'GlitchLib RemoveMoney')
+        player.Functions.RemoveMoney('cash', amount, 'GlitchAbst RemoveMoney')
         return true
     end
     return false
 end
 
-GlitchLib.Framework.GetBankMoney = function(source)
+GlitchAbst.Framework.GetBankMoney = function(source)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
         return player.Functions.GetMoney('bank')
@@ -78,26 +78,26 @@ GlitchLib.Framework.GetBankMoney = function(source)
     return 0
 end
 
-GlitchLib.Framework.AddBankMoney = function(source, amount)
+GlitchAbst.Framework.AddBankMoney = function(source, amount)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
-        player.Functions.AddMoney('bank', amount, 'GlitchLib AddBankMoney')
+        player.Functions.AddMoney('bank', amount, 'GlitchAbst AddBankMoney')
         return true
     end
     return false
 end
 
-GlitchLib.Framework.RemoveBankMoney = function(source, amount)
+GlitchAbst.Framework.RemoveBankMoney = function(source, amount)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
-        player.Functions.RemoveMoney('bank', amount, 'GlitchLib RemoveBankMoney')
+        player.Functions.RemoveMoney('bank', amount, 'GlitchAbst RemoveBankMoney')
         return true
     end
     return false
 end
 
 -- Job Management
-GlitchLib.Framework.GetJob = function(source)
+GlitchAbst.Framework.GetJob = function(source)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
         local job = player.PlayerData.job
@@ -113,7 +113,7 @@ GlitchLib.Framework.GetJob = function(source)
     return {name = 'unemployed', grade = 0}
 end
 
-GlitchLib.Framework.SetJob = function(source, job, grade)
+GlitchAbst.Framework.SetJob = function(source, job, grade)
     local player = QBCore.Functions.GetPlayer(source)
     if player then
         player.Functions.SetJob(job, grade)
@@ -123,23 +123,23 @@ GlitchLib.Framework.SetJob = function(source, job, grade)
 end
 
 -- Inventory Management
-GlitchLib.Framework.RegisterUsableItem = function(item, cb)
+GlitchAbst.Framework.RegisterUsableItem = function(item, cb)
     QBCore.Functions.CreateUseableItem(item, cb)
     return true
 end
 
-GlitchLib.Framework.UseItem = function(source, item)
+GlitchAbst.Framework.UseItem = function(source, item)
     -- QBCore doesn't have a direct UseItem function
     TriggerClientEvent('inventory:client:UseItem', source, item)
     return true
 end
 
-GlitchLib.Framework.HasItem = function(source, item, count)
+GlitchAbst.Framework.HasItem = function(source, item, count)
     count = count or 1
 
-    if GlitchLib.Inventory and GlitchLib.Inventory.GetItemCount then
+    if GlitchAbst.Inventory and GlitchAbst.Inventory.GetItemCount then
         -- Use dedicated inventory system if available
-        return GlitchLib.Inventory.GetItemCount(source, item) >= count
+        return GlitchAbst.Inventory.GetItemCount(source, item) >= count
     end
 
     local player = QBCore.Functions.GetPlayer(source)
@@ -150,11 +150,11 @@ GlitchLib.Framework.HasItem = function(source, item, count)
     return false
 end
 
-GlitchLib.Framework.Notify = function(source, message, type, length)
+GlitchAbst.Framework.Notify = function(source, message, type, length)
     if source then
         TriggerClientEvent('QBCore:Notify', source, message, type, length)
     end
     return true
 end
 
-GlitchLib.Utils.DebugLog('QBCore Framework module loaded successfully')
+GlitchAbst.Utils.DebugLog('QBCore Framework module loaded successfully')

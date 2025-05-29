@@ -1,24 +1,24 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading QBCore notifications module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading QBCore notifications module^7")
     return false
 end
 
-GlitchLib.Notifications = GlitchLib.Notifications or {}
+GlitchAbst.Notifications = GlitchAbst.Notifications or {}
 
 -- Skip if notification system doesn't match
 if Config and Config.NotificationSystem and Config.NotificationSystem ~= 'qb' and Config.NotificationSystem ~= 'auto' then
-    GlitchLib.Utils.DebugLog('Skipping QBCore notifications module (using ' .. Config.NotificationSystem .. ')')
+    GlitchAbst.Utils.DebugLog('Skipping QBCore notifications module (using ' .. Config.NotificationSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
 if GetResourceState('qb-core') ~= 'started' then
-    GlitchLib.Utils.DebugLog('qb-core resource is not available')
+    GlitchAbst.Utils.DebugLog('qb-core resource is not available')
     return false
 end
 
-GlitchLib.Utils.DebugLog('QBCore notifications module loaded')
+GlitchAbst.Utils.DebugLog('QBCore notifications module loaded')
 
 -- Safe way to get QBCore
 local QBCore = nil
@@ -27,7 +27,7 @@ local success, result = pcall(function()
 end)
 
 if not success or not result then
-    GlitchLib.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore notifications')
+    GlitchAbst.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore notifications')
     return false
 end
 
@@ -40,7 +40,7 @@ local activeQBNotifications = {}
 local nextQBNotificationId = 1
 
 -- Basic notification
-GlitchLib.Notifications.Show = function(params)
+GlitchAbst.Notifications.Show = function(params)
     local qbType = 'primary'
     if params.type == 'error' then qbType = 'error'
     elseif params.type == 'success' then qbType = 'success'
@@ -64,8 +64,8 @@ GlitchLib.Notifications.Show = function(params)
 end
 
 -- Success notification
-GlitchLib.Notifications.Success = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Success = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'success',
@@ -74,8 +74,8 @@ GlitchLib.Notifications.Success = function(title, message, duration)
 end
 
 -- Error notification
-GlitchLib.Notifications.Error = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Error = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'error',
@@ -84,8 +84,8 @@ GlitchLib.Notifications.Error = function(title, message, duration)
 end
 
 -- Info notification
-GlitchLib.Notifications.Info = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Info = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'info',
@@ -94,8 +94,8 @@ GlitchLib.Notifications.Info = function(title, message, duration)
 end
 
 -- Warning notification
-GlitchLib.Notifications.Warning = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Warning = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'warning',
@@ -106,23 +106,23 @@ end
 -- Advanced notification functions (limited support in QBCore)
 
 -- Add box to an existing notification (not supported in QBCore)
-GlitchLib.Notifications.AddBox = function(notificationId, title, message, color)
+GlitchAbst.Notifications.AddBox = function(notificationId, title, message, color)
     -- QBCore doesn't support adding boxes to notifications
     -- Show a new notification instead
-    return GlitchLib.Notifications.Show({
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message
     })
 end
 
 -- Remove a specific box from a notification (not supported in QBCore)
-GlitchLib.Notifications.RemoveBox = function(notificationId, boxId)
+GlitchAbst.Notifications.RemoveBox = function(notificationId, boxId)
     -- Not supported in QBCore
     return false
 end
 
 -- Remove an entire notification (not supported in QBCore)
-GlitchLib.Notifications.Remove = function(notificationId)
+GlitchAbst.Notifications.Remove = function(notificationId)
     -- QBCore doesn't support removing notifications
     -- Just mark it as removed in our tracking
     if activeQBNotifications[notificationId] then
@@ -133,7 +133,7 @@ GlitchLib.Notifications.Remove = function(notificationId)
 end
 
 -- Update content of a notification (not supported in QBCore)
-GlitchLib.Notifications.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
+GlitchAbst.Notifications.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
     -- QBCore doesn't support updating notifications
     -- Show a new one instead
     local qbType = 'primary'
@@ -146,15 +146,15 @@ GlitchLib.Notifications.Update = function(notificationId, boxId, newMessage, new
 end
 
 -- Toggle a notification (not supported in QBCore)
-GlitchLib.Notifications.Toggle = function(id, title, message, color)
+GlitchAbst.Notifications.Toggle = function(id, title, message, color)
     -- Just show a new notification
-    return GlitchLib.Notifications.Show({
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message
     })
 end
 
 -- Mirror function to UI namespace for backward compatibility
-GlitchLib.UI.Notify = function(params)
-    return GlitchLib.Notifications.Show(params)
+GlitchAbst.UI.Notify = function(params)
+    return GlitchAbst.Notifications.Show(params)
 end

@@ -43,7 +43,7 @@ A comprehensive abstraction layer for FiveM that seamlessly integrates multiple 
 1. Download or clone this repository
 2. Place it in your server's `resources` folder
 3. Add `ensure glitch-abstraction` to your `server.cfg` (make sure it loads before any resources that use it)
-4. Reference the library in your scripts: `local GlitchAbst = exports['glitch-abstraction']:GetLib()`
+4. Reference the library in your scripts: `local GlitchAbst = exports['glitch-abstraction']:getAbstraction()`
 
 ## Function Reference
 
@@ -479,7 +479,7 @@ GlitchAbst.Scaleform.ShowCredits(items) -- Show scrolling credits UI
 
 ## Basic Usage
 ```lua
-local Lib = exports['glitch-abstraction']:GetLib()
+local Lib = exports['glitch-abstraction']:getAbstraction()
 
 CreateThread(function()
     while not GlitchAbst.IsReady do Wait(100) end

@@ -1,25 +1,25 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading ESX doorlock module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading ESX doorlock module^7")
     return false
 end
 
 -- Skip if doorlock system doesn't match
 if Config and Config.DoorlockSystem and Config.DoorlockSystem ~= 'esx' and Config.DoorlockSystem ~= 'auto' then
-    GlitchLib.Utils.DebugLog('Skipping ESX doorlock module (using ' .. Config.DoorlockSystem .. ')')
+    GlitchAbst.Utils.DebugLog('Skipping ESX doorlock module (using ' .. Config.DoorlockSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
 if GetResourceState('esx_doorlock') ~= 'started' then
-    GlitchLib.Utils.DebugLog('esx_doorlock resource is not available')
+    GlitchAbst.Utils.DebugLog('esx_doorlock resource is not available')
     return false
 end
 
 -- Initialize doorlock namespace
-GlitchLib.DoorLock = GlitchLib.DoorLock or {}
+GlitchAbst.DoorLock = GlitchAbst.DoorLock or {}
 
-GlitchLib.Utils.DebugLog('ESX doorlock module loaded')
+GlitchAbst.Utils.DebugLog('ESX doorlock module loaded')
 
 -- Local cache to store door information
 local doorCache = {}
@@ -41,7 +41,7 @@ AddEventHandler('esx_doorlock:setState', function(doorIndex, state)
 end)
 
 -- Check if a door is locked
-GlitchLib.DoorLock.IsDoorLocked = function(door)
+GlitchAbst.DoorLock.IsDoorLocked = function(door)
     if type(door) == 'number' and doorCache[door] then
         return doorCache[door].locked
     elseif type(door) == 'string' then
@@ -56,7 +56,7 @@ GlitchLib.DoorLock.IsDoorLocked = function(door)
 end
 
 -- Lock a door
-GlitchLib.DoorLock.SetDoorLocked = function(door, state)
+GlitchAbst.DoorLock.SetDoorLocked = function(door, state)
     local doorId = door
     if type(door) == 'string' then
         -- Try to find door by name
@@ -76,7 +76,7 @@ GlitchLib.DoorLock.SetDoorLocked = function(door, state)
 end
 
 -- Get nearby doors
-GlitchLib.DoorLock.GetNearbyDoors = function()
+GlitchAbst.DoorLock.GetNearbyDoors = function()
     local playerPos = GetEntityCoords(PlayerPedId())
     local nearbyDoors = {}
     
@@ -94,7 +94,7 @@ GlitchLib.DoorLock.GetNearbyDoors = function()
 end
 
 -- Get all doors
-GlitchLib.DoorLock.GetAllDoors = function()
+GlitchAbst.DoorLock.GetAllDoors = function()
     local doors = {}
     for id, door in pairs(doorCache) do
         door.id = id
@@ -104,7 +104,7 @@ GlitchLib.DoorLock.GetAllDoors = function()
 end
 
 -- Check if player has access to a door
-GlitchLib.DoorLock.HasAccess = function(door)
+GlitchAbst.DoorLock.HasAccess = function(door)
     local doorId = door
     if type(door) == 'string' then
         -- Try to find door by name

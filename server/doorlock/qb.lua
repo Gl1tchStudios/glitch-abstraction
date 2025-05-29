@@ -1,5 +1,5 @@
 -- qb-doorlock Server
-GlitchLib.Utils.DebugLog('qb-doorlock server module loaded')
+GlitchAbst.Utils.DebugLog('qb-doorlock server module loaded')
 
 -- Check if the resource is actually available before proceeding
 local function IsResourceAvailable(resourceName)
@@ -9,15 +9,15 @@ end
 
 -- Early exit if qb-doorlock isn't available
 if not IsResourceAvailable('qb-doorlock') then
-    GlitchLib.Utils.DebugLog('WARNING: qb-doorlock resource is not available')
+    GlitchAbst.Utils.DebugLog('WARNING: qb-doorlock resource is not available')
     
     -- Set up placeholder functions
-    GlitchLib.DoorLock.GetDoorState = function(door) return nil end
-    GlitchLib.DoorLock.SetDoorState = function(door, state, source) return false end
-    GlitchLib.DoorLock.PlayerHasAccess = function(source, door) return false end
-    GlitchLib.DoorLock.GetAllDoors = function() return {} end
-    GlitchLib.DoorLock.AddDoor = function(door) return false end
-    GlitchLib.DoorLock.RemoveDoor = function(door) return false end
+    GlitchAbst.DoorLock.GetDoorState = function(door) return nil end
+    GlitchAbst.DoorLock.SetDoorState = function(door, state, source) return false end
+    GlitchAbst.DoorLock.PlayerHasAccess = function(source, door) return false end
+    GlitchAbst.DoorLock.GetAllDoors = function() return {} end
+    GlitchAbst.DoorLock.AddDoor = function(door) return false end
+    GlitchAbst.DoorLock.RemoveDoor = function(door) return false end
     
     return  -- Exit early
 end
@@ -46,7 +46,7 @@ local function initQBCore()
     end
     
     if not success or result == nil then
-        GlitchLib.Utils.DebugLog('ERROR: Failed to initialize QBCore for doorlock - export not found')
+        GlitchAbst.Utils.DebugLog('ERROR: Failed to initialize QBCore for doorlock - export not found')
         return false
     end
     
@@ -76,7 +76,7 @@ local function getDoorData()
         end)
         
         if success and result then
-            GlitchLib.Utils.DebugLog('Successfully got door data using export: ' .. exportName)
+            GlitchAbst.Utils.DebugLog('Successfully got door data using export: ' .. exportName)
             return result
         end
     end
@@ -97,11 +97,11 @@ local function getDoorData()
     end
     
     if doorData then
-        GlitchLib.Utils.DebugLog('Successfully got door data using event')
+        GlitchAbst.Utils.DebugLog('Successfully got door data using event')
         return doorData
     end
     
-    GlitchLib.Utils.DebugLog('WARNING: Could not get door data from qb-doorlock')
+    GlitchAbst.Utils.DebugLog('WARNING: Could not get door data from qb-doorlock')
     return {}
 end
 
@@ -112,7 +112,7 @@ CreateThread(function()
 end)
 
 -- Get door state
-GlitchLib.DoorLock.GetDoorState = function(door)
+GlitchAbst.DoorLock.GetDoorState = function(door)
     if type(door) == 'number' then
         if doorCache[door] then
             return doorCache[door].locked
@@ -129,7 +129,7 @@ GlitchLib.DoorLock.GetDoorState = function(door)
 end
 
 -- Set door state
-GlitchLib.DoorLock.SetDoorState = function(door, state, playerId)
+GlitchAbst.DoorLock.SetDoorState = function(door, state, playerId)
     local doorId = door
     if type(door) == 'string' then
         -- Try to find door by name/id string
@@ -150,7 +150,7 @@ GlitchLib.DoorLock.SetDoorState = function(door, state, playerId)
 end
 
 -- Check if player has access to a door
-GlitchLib.DoorLock.PlayerHasAccess = function(source, door)
+GlitchAbst.DoorLock.PlayerHasAccess = function(source, door)
     local doorId = door
     if type(door) == 'string' then
         -- Try to find door by name/id string
@@ -214,18 +214,18 @@ GlitchLib.DoorLock.PlayerHasAccess = function(source, door)
 end
 
 -- Get all doors
-GlitchLib.DoorLock.GetAllDoors = function()
+GlitchAbst.DoorLock.GetAllDoors = function()
     return doorCache
 end
 
 -- Add a new door (requires config update)
-GlitchLib.DoorLock.AddDoor = function(door)
-    GlitchLib.Utils.DebugLog('Adding new doors in qb-doorlock requires manual config update')
+GlitchAbst.DoorLock.AddDoor = function(door)
+    GlitchAbst.Utils.DebugLog('Adding new doors in qb-doorlock requires manual config update')
     return false
 end
 
 -- Remove a door (requires config update)
-GlitchLib.DoorLock.RemoveDoor = function(door)
-    GlitchLib.Utils.DebugLog('Removing doors in qb-doorlock requires manual config update')
+GlitchAbst.DoorLock.RemoveDoor = function(door)
+    GlitchAbst.Utils.DebugLog('Removing doors in qb-doorlock requires manual config update')
     return false
 end

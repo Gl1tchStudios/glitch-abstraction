@@ -1,31 +1,31 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading bt-target module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading bt-target module^7")
     return false
 end
 
 -- Initialize target namespace
-GlitchLib.Target = GlitchLib.Target or {}
+GlitchAbst.Target = GlitchAbst.Target or {}
 
 -- Skip if target system doesn't match
 if Config and Config.TargetSystem and Config.TargetSystem ~= 'esx' and Config.TargetSystem ~= 'auto' then
-    GlitchLib.Utils.DebugLog('Skipping bt-target module (using ' .. Config.TargetSystem .. ')')
+    GlitchAbst.Utils.DebugLog('Skipping bt-target module (using ' .. Config.TargetSystem .. ')')
     return false
 end
 
 -- Check if resource is actually available
 local targetResource = 'bt-target' -- or 'qtarget' depending on your ESX setup
 if GetResourceState(targetResource) ~= 'started' then
-    GlitchLib.Utils.DebugLog(targetResource .. ' resource is not available')
+    GlitchAbst.Utils.DebugLog(targetResource .. ' resource is not available')
     return false
 end
 
-GlitchLib.Utils.DebugLog('ESX target module loaded')
+GlitchAbst.Utils.DebugLog('ESX target module loaded')
 
-GlitchLib.Utils.DebugLog('bt-target module loaded')
+GlitchAbst.Utils.DebugLog('bt-target module loaded')
 
 -- Add a target entity
-GlitchLib.Target.AddTargetEntity = function(entities, options)
+GlitchAbst.Target.AddTargetEntity = function(entities, options)
     -- bt-target has different structure
     for _, entity in pairs(entities) do
         for _, option in pairs(options) do
@@ -46,7 +46,7 @@ GlitchLib.Target.AddTargetEntity = function(entities, options)
 end
 
 -- Add a target model
-GlitchLib.Target.AddTargetModel = function(models, options)
+GlitchAbst.Target.AddTargetModel = function(models, options)
     -- Transform options to bt-target format
     local btOptions = {}
     for _, option in pairs(options) do
@@ -66,7 +66,7 @@ GlitchLib.Target.AddTargetModel = function(models, options)
 end
 
 -- Add a box zone
-GlitchLib.Target.AddBoxZone = function(name, center, length, width, options, targetOptions)
+GlitchAbst.Target.AddBoxZone = function(name, center, length, width, options, targetOptions)
     -- Transform options to bt-target format
     local btOptions = {}
 
@@ -103,12 +103,12 @@ GlitchLib.Target.AddBoxZone = function(name, center, length, width, options, tar
     })
 end
 
--- BT Target Implementation for GlitchLib
+-- BT Target Implementation for GlitchAbst
 -- This file handles the BT target system
 
--- Initialize GlitchLib and Target namespace if they don't exist
-GlitchLib = GlitchLib or {}
-GlitchLib.Target = GlitchLib.Target or {}
+-- Initialize GlitchAbst and Target namespace if they don't exist
+GlitchAbst = GlitchAbst or {}
+GlitchAbst.Target = GlitchAbst.Target or {}
 
 -- Check if bt-target resource is running
 if GetResourceState('bt-target') ~= 'started' then
@@ -116,7 +116,7 @@ if GetResourceState('bt-target') ~= 'started' then
 end
 
 -- Register the BT Target implementation
-GlitchLib.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
+GlitchAbst.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
     local name, center, length, width, options, targetOptions
     
     if type(arg1) == 'table' then
@@ -192,7 +192,7 @@ GlitchLib.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
 end
 
 -- Add a sphere zone
-GlitchLib.Target.AddSphereZone = function(name, center, radius, options, targetOptions)
+GlitchAbst.Target.AddSphereZone = function(name, center, radius, options, targetOptions)
     -- Transform options to bt-target format
     local btOptions = {}
     for _, option in pairs(targetOptions) do
@@ -215,12 +215,12 @@ GlitchLib.Target.AddSphereZone = function(name, center, radius, options, targetO
 end
 
 -- Remove zone
-GlitchLib.Target.RemoveZone = function(name)
+GlitchAbst.Target.RemoveZone = function(name)
     exports['bt-target']:RemoveZone(name)
 end
 
 -- Add target for all players
-GlitchLib.Target.AddGlobalPlayer = function(options)
+GlitchAbst.Target.AddGlobalPlayer = function(options)
     -- Transform options to bt-target format
     local btOptions = {}
     for _, option in pairs(options) do

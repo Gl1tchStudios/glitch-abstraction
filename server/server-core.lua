@@ -1,7 +1,7 @@
--- Make sure GlitchLib is initialized
-if GlitchLib == nil then
-    print('[ERROR] GlitchLib initialization failed in shared scripts - attempting emergency initialization')
-    GlitchLib = {
+-- Make sure GlitchAbst is initialized
+if GlitchAbst == nil then
+    print('[ERROR] GlitchAbst initialization failed in shared scripts - attempting emergency initialization')
+    GlitchAbst = {
         Framework = {},
         UI = {},
         Target = {},
@@ -17,8 +17,8 @@ if GlitchLib == nil then
     }
     
     -- Add emergency debug function
-    GlitchLib.Utils.DebugLog = function(message)
-        print('[GlitchLib] ' .. message)
+    GlitchAbst.Utils.DebugLog = function(message)
+        print('[GlitchAbst] ' .. message)
     end
 end
 
@@ -31,7 +31,7 @@ end
 -- Export handling function with better error handling
 local function GetResourceExport(resourceName, exportNames)
     if not IsResourceAvailable(resourceName) then
-        GlitchLib.Utils.DebugLog('Resource not available: ' .. resourceName)
+        GlitchAbst.Utils.DebugLog('Resource not available: ' .. resourceName)
         return nil
     end
     
@@ -41,18 +41,18 @@ local function GetResourceExport(resourceName, exportNames)
         end)
         
         if success and result then
-            GlitchLib.Utils.DebugLog('Successfully loaded export ' .. resourceName .. ':' .. exportName)
+            GlitchAbst.Utils.DebugLog('Successfully loaded export ' .. resourceName .. ':' .. exportName)
             return result
         end
     end
     
-    GlitchLib.Utils.DebugLog('Failed to find valid export in ' .. resourceName)
+    GlitchAbst.Utils.DebugLog('Failed to find valid export in ' .. resourceName)
     return nil
 end
 
 -- Function to detect available resources and their versions
 local function DetectResources()
-    GlitchLib.Utils.DebugLog('Detecting available resources...')
+    GlitchAbst.Utils.DebugLog('Detecting available resources...')
     
     local available = {
         frameworks = {},
@@ -69,7 +69,7 @@ local function DetectResources()
                 name = fw.name,
                 resourceName = fw.resourceName
             })
-            GlitchLib.Utils.DebugLog('Detected framework: ' .. fw.name)
+            GlitchAbst.Utils.DebugLog('Detected framework: ' .. fw.name)
         end
     end
     
@@ -80,7 +80,7 @@ local function DetectResources()
                 name = inv.name,
                 resourceName = inv.resourceName
             })
-            GlitchLib.Utils.DebugLog('Detected inventory: ' .. inv.name)
+            GlitchAbst.Utils.DebugLog('Detected inventory: ' .. inv.name)
         end
     end
     
@@ -113,7 +113,7 @@ local function DetectResources()
                 name = target.name,
                 resourceName = target.resourceName
             })
-            GlitchLib.Utils.DebugLog('Detected target system: ' .. target.name)
+            GlitchAbst.Utils.DebugLog('Detected target system: ' .. target.name)
         end
     end
     
@@ -123,7 +123,7 @@ local function DetectResources()
             name = 'pickle_xp',
             resourceName = 'pickle_xp'
         })
-        GlitchLib.Utils.DebugLog('Detected progression system: pickle_xp')
+        GlitchAbst.Utils.DebugLog('Detected progression system: pickle_xp')
     end
     
     return available
@@ -148,11 +148,11 @@ local function InitializeLibrary()
         local implementationName = frameworkName
         if Config.FrameworkMapping and Config.FrameworkMapping[frameworkName] then
             implementationName = Config.FrameworkMapping[frameworkName]
-            GlitchLib.Utils.DebugLog('Using ' .. implementationName .. ' implementation for ' .. frameworkName)
+            GlitchAbst.Utils.DebugLog('Using ' .. implementationName .. ' implementation for ' .. frameworkName)
         end
         
         -- Load the appropriate framework module
-        GlitchLib.Utils.DebugLog('Loading framework module: ' .. string.lower(implementationName))
+        GlitchAbst.Utils.DebugLog('Loading framework module: ' .. string.lower(implementationName))
         
         local status, err = pcall(function()
             local frameworkModule = LoadResourceFile(GetCurrentResourceName(), 'server/framework/' .. string.lower(implementationName) .. '.lua')
@@ -160,7 +160,7 @@ local function InitializeLibrary()
                 local fn, loadErr = load(frameworkModule)
                 if fn then
                     fn() -- Execute the module
-                    GlitchLib.Framework.Type = frameworkName
+                    GlitchAbst.Framework.Type = frameworkName
                     frameworkLoaded = true
                 else
                     error('Failed to load framework module: ' .. (loadErr or 'Unknown error'))
@@ -171,14 +171,14 @@ local function InitializeLibrary()
         end)
         
         if not status then
-            GlitchLib.Utils.DebugLog('Failed to load framework: ' .. err)
+            GlitchAbst.Utils.DebugLog('Failed to load framework: ' .. err)
         else
-            GlitchLib.Utils.DebugLog('Successfully loaded framework: ' .. frameworkName)
+            GlitchAbst.Utils.DebugLog('Successfully loaded framework: ' .. frameworkName)
         end
     end
     
     if not frameworkLoaded then
-        GlitchLib.Utils.DebugLog('No supported framework found or failed to load!')
+        GlitchAbst.Utils.DebugLog('No supported framework found or failed to load!')
     end
     
     -- Only initialize other systems if a framework was loaded successfully
@@ -188,7 +188,7 @@ local function InitializeLibrary()
         if #available.inventories > 0 then
             local inv = available.inventories[1] -- Use the first detected inventory
             
-            GlitchLib.Utils.DebugLog('Loading inventory module: ' .. string.lower(inv.name))
+            GlitchAbst.Utils.DebugLog('Loading inventory module: ' .. string.lower(inv.name))
             
             local status, err = pcall(function()
                 local invModule = LoadResourceFile(GetCurrentResourceName(), 'server/inventory/' .. string.lower(inv.name) .. '.lua')
@@ -196,7 +196,7 @@ local function InitializeLibrary()
                     local fn, loadErr = load(invModule)
                     if fn then
                         fn() -- Execute the module
-                        GlitchLib.Inventory.Type = inv.name
+                        GlitchAbst.Inventory.Type = inv.name
                         inventoryLoaded = true
                     else
                         error('Failed to load inventory module: ' .. (loadErr or 'Unknown error'))
@@ -207,9 +207,9 @@ local function InitializeLibrary()
             end)
             
             if not status then
-                GlitchLib.Utils.DebugLog('Failed to load inventory system: ' .. err)
+                GlitchAbst.Utils.DebugLog('Failed to load inventory system: ' .. err)
             else
-                GlitchLib.Utils.DebugLog('Successfully loaded inventory: ' .. inv.name)
+                GlitchAbst.Utils.DebugLog('Successfully loaded inventory: ' .. inv.name)
             end
         end
         
@@ -218,7 +218,7 @@ local function InitializeLibrary()
         if #available.progression > 0 then
             local prog = available.progression[1]
             
-            GlitchLib.Utils.DebugLog('Loading progression module: ' .. string.lower(prog.name))
+            GlitchAbst.Utils.DebugLog('Loading progression module: ' .. string.lower(prog.name))
             
             local status, err = pcall(function()
                 local progressionModule = LoadResourceFile(GetCurrentResourceName(), 'server/progression/' .. string.lower(prog.name) .. '.lua')
@@ -226,7 +226,7 @@ local function InitializeLibrary()
                     local fn, loadErr = load(progressionModule)
                     if fn then
                         fn() -- Execute the module
-                        GlitchLib.Progression.Type = prog.name
+                        GlitchAbst.Progression.Type = prog.name
                         progressionLoaded = true
                     else
                         error('Failed to load progression module: ' .. (loadErr or 'Unknown error'))
@@ -237,9 +237,9 @@ local function InitializeLibrary()
             end)
             
             if not status then
-                GlitchLib.Utils.DebugLog('Failed to load progression system: ' .. err)
+                GlitchAbst.Utils.DebugLog('Failed to load progression system: ' .. err)
             else
-                GlitchLib.Utils.DebugLog('Successfully loaded progression system: ' .. prog.name)
+                GlitchAbst.Utils.DebugLog('Successfully loaded progression system: ' .. prog.name)
             end
         end
     
@@ -248,7 +248,7 @@ local function InitializeLibrary()
         if #available.doorlocks > 0 then
             local dl = available.doorlocks[1] -- Use the first detected door lock system
             
-            GlitchLib.Utils.DebugLog('Loading door lock module: ' .. string.lower(dl.name))
+            GlitchAbst.Utils.DebugLog('Loading door lock module: ' .. string.lower(dl.name))
             
             local status, err = pcall(function()
                 local doorLockModule = LoadResourceFile(GetCurrentResourceName(), 'server/doorlock/' .. string.lower(dl.name) .. '.lua')
@@ -256,7 +256,7 @@ local function InitializeLibrary()
                     local fn, loadErr = load(doorLockModule)
                     if fn then
                         fn() -- Execute the module
-                        GlitchLib.DoorLock.Type = dl.name
+                        GlitchAbst.DoorLock.Type = dl.name
                         doorLockLoaded = true
                     else
                         error('Failed to load door lock module: ' .. (loadErr or 'Unknown error'))
@@ -267,20 +267,20 @@ local function InitializeLibrary()
             end)
             
             if not status then
-                GlitchLib.Utils.DebugLog('Failed to load door lock system: ' .. err)
+                GlitchAbst.Utils.DebugLog('Failed to load door lock system: ' .. err)
             else
-                GlitchLib.Utils.DebugLog('Successfully loaded door lock system: ' .. dl.name)
+                GlitchAbst.Utils.DebugLog('Successfully loaded door lock system: ' .. dl.name)
             end
         end
     end
     
-    GlitchLib.IsReady = frameworkLoaded
+    GlitchAbst.IsReady = frameworkLoaded
     
     print("^2╔════════════════════════════════════════════╗^7")
-    print("^2║           GLITCH LIB LOADED: " .. (GlitchLib.IsReady and "^2YES" or "^1NO ") .. "           ║^7")
+    print("^2║           GLITCH LIB LOADED: " .. (GlitchAbst.IsReady and "^2YES" or "^1NO ") .. "           ║^7")
     print("^2╚════════════════════════════════════════════╝^7")
     
-    TriggerEvent('glitchlib:ready', GlitchLib.IsReady)
+    TriggerEvent('GlitchAbst:ready', GlitchAbst.IsReady)
 end
 
 -- Wait a moment for other resources to start
@@ -290,6 +290,6 @@ CreateThread(function()
 end)
 
 -- Export the library
-exports('GetLib', function()
-    return GlitchLib
+exports('getAbstraction', function()
+    return GlitchAbst
 end)

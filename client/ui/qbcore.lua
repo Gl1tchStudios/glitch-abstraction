@@ -1,6 +1,6 @@
 -- First check if we should load this module
-if GlitchLib.FrameworkName ~= 'QBCore' then
-    GlitchLib.Utils.DebugLog('Skipping QBCore UI module (using ' .. (GlitchLib.FrameworkName or 'unknown') .. ')')
+if GlitchAbst.FrameworkName ~= 'QBCore' then
+    GlitchAbst.Utils.DebugLog('Skipping QBCore UI module (using ' .. (GlitchAbst.FrameworkName or 'unknown') .. ')')
     return false
 end
 
@@ -11,15 +11,15 @@ local success, result = pcall(function()
 end)
 
 if not success or not result then
-    GlitchLib.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore UI')
+    GlitchAbst.Utils.DebugLog('WARNING: Failed to get QBCore object, skipping QBCore UI')
     return false
 end
 
 QBCore = result
-GlitchLib.Utils.DebugLog('QBCore UI module loaded')
+GlitchAbst.Utils.DebugLog('QBCore UI module loaded')
 
 -- Input dialog (using qb-input)
-GlitchLib.UI.Input = function(header, inputs)
+GlitchAbst.UI.Input = function(header, inputs)
     local inputData = {
         header = header,
         inputs = {}
@@ -48,7 +48,7 @@ GlitchLib.UI.Input = function(header, inputs)
 end
 
 -- Menu (using qb-menu)
-GlitchLib.UI.ContextMenu = function(id, title, options, position)
+GlitchAbst.UI.ContextMenu = function(id, title, options, position)
     local menuOptions = {
         {
             header = title,
@@ -74,10 +74,10 @@ GlitchLib.UI.ContextMenu = function(id, title, options, position)
     exports['qb-menu']:openMenu(menuOptions)
 end
 
-GlitchLib.UI.CreateContextMenu = function(id, title, options)
+GlitchAbst.UI.CreateContextMenu = function(id, title, options)
     -- QB doesn't need pre-registration, just store for later
-    GlitchLib.UI._menus = GlitchLib.UI._menus or {}
-    GlitchLib.UI._menus[id] = {
+    GlitchAbst.UI._menus = GlitchAbst.UI._menus or {}
+    GlitchAbst.UI._menus[id] = {
         title = title,
         options = options
     }
@@ -85,7 +85,7 @@ GlitchLib.UI.CreateContextMenu = function(id, title, options)
 end
 
 -- Progress bar
-GlitchLib.UI.ProgressBar = function(params)
+GlitchAbst.UI.ProgressBar = function(params)
     local p = promise.new()
     
     QBCore.Functions.Progressbar(params.name or "random_progressbar", params.label, params.duration, params.useWhileDead or false, params.canCancel or true, {
@@ -109,31 +109,31 @@ GlitchLib.UI.ProgressBar = function(params)
 end
 
 -- Text UI (using DrawText3D)
-GlitchLib.UI.ShowTextUI = function(message, options)
+GlitchAbst.UI.ShowTextUI = function(message, options)
     -- QB doesn't have a built-in text UI, using a simplified approach
-    GlitchLib.UI._textUI = {
+    GlitchAbst.UI._textUI = {
         message = message,
         position = options and options.position or "right-center",
         active = true
     }
     
     CreateThread(function()
-        while GlitchLib.UI._textUI and GlitchLib.UI._textUI.active do
-            DrawText3D(GetEntityCoords(PlayerPedId()).x, GetEntityCoords(PlayerPedId()).y, GetEntityCoords(PlayerPedId()).z, GlitchLib.UI._textUI.message)
+        while GlitchAbst.UI._textUI and GlitchAbst.UI._textUI.active do
+            DrawText3D(GetEntityCoords(PlayerPedId()).x, GetEntityCoords(PlayerPedId()).y, GetEntityCoords(PlayerPedId()).z, GlitchAbst.UI._textUI.message)
             Wait(0)
         end
     end)
 end
 
-GlitchLib.UI.HideTextUI = function()
-    if GlitchLib.UI._textUI then
-        GlitchLib.UI._textUI.active = false
+GlitchAbst.UI.HideTextUI = function()
+    if GlitchAbst.UI._textUI then
+        GlitchAbst.UI._textUI.active = false
     end
 end
 
 if GetResourceState('ox_lib') ~= 'started' then
     -- Alert dialog (using phone notification as fallback)
-    GlitchLib.UI.Alert = function(title, message, type, icon)
+    GlitchAbst.UI.Alert = function(title, message, type, icon)
         -- QB doesn't have built-in alerts, using notification
         QBCore.Functions.Notify(title .. "\n" .. message, type or "primary", 5000)
         return true -- No way to wait for user response in basic QB

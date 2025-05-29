@@ -1,18 +1,18 @@
--- Safety check for GlitchLib
-if not GlitchLib or not GlitchLib.Utils then
-    print("^1[ERROR] GlitchLib not initialized before loading Glitch notifications module^7")
+-- Safety check for GlitchAbst
+if not GlitchAbst or not GlitchAbst.Utils then
+    print("^1[ERROR] GlitchAbst not initialized before loading Glitch notifications module^7")
     return false
 end
 
-GlitchLib.Notifications = GlitchLib.Notifications or {}
-GlitchLib.Notifications.Glitch = GlitchLib.Notifications.Glitch or {}
+GlitchAbst.Notifications = GlitchAbst.Notifications or {}
+GlitchAbst.Notifications.Glitch = GlitchAbst.Notifications.Glitch or {}
 
 local glitchNotificationsAvailable = GetResourceState('glitch-notifications') == 'started'
 
 if not glitchNotificationsAvailable then
-    GlitchLib.Utils.DebugLog('glitch-notifications resource is not available')
+    GlitchAbst.Utils.DebugLog('glitch-notifications resource is not available')
 else
-    GlitchLib.Utils.DebugLog('Glitch notifications module loaded')
+    GlitchAbst.Utils.DebugLog('Glitch notifications module loaded')
 end
 
 -- Store notification IDs for reference
@@ -27,9 +27,9 @@ local typeToColor = {
     primary = '#3c8dbc'   -- Light Blue
 }
 
-GlitchLib.Notifications.Glitch.Show = function(params)
+GlitchAbst.Notifications.Glitch.Show = function(params)
     if not glitchNotificationsAvailable then 
-        return GlitchLib.Notifications.Fallback('Show', params)
+        return GlitchAbst.Notifications.Fallback('Show', params)
     end
 
     local title = params.title or ''
@@ -55,8 +55,8 @@ GlitchLib.Notifications.Glitch.Show = function(params)
 end
 
 -- Success notification
-GlitchLib.Notifications.Glitch.Success = function(title, message, duration)
-    return GlitchLib.Notifications.Glitch.Show({
+GlitchAbst.Notifications.Glitch.Success = function(title, message, duration)
+    return GlitchAbst.Notifications.Glitch.Show({
         title = title,
         description = message,
         type = 'success',
@@ -65,8 +65,8 @@ GlitchLib.Notifications.Glitch.Success = function(title, message, duration)
 end
 
 -- Error notification
-GlitchLib.Notifications.Glitch.Error = function(title, message, duration)
-    return GlitchLib.Notifications.Glitch.Show({
+GlitchAbst.Notifications.Glitch.Error = function(title, message, duration)
+    return GlitchAbst.Notifications.Glitch.Show({
         title = title,
         description = message,
         type = 'error',
@@ -75,8 +75,8 @@ GlitchLib.Notifications.Glitch.Error = function(title, message, duration)
 end
 
 -- Info notification
-GlitchLib.Notifications.Glitch.Info = function(title, message, duration)
-    return GlitchLib.Notifications.Glitch.Show({
+GlitchAbst.Notifications.Glitch.Info = function(title, message, duration)
+    return GlitchAbst.Notifications.Glitch.Show({
         title = title,
         description = message,
         type = 'info',
@@ -85,8 +85,8 @@ GlitchLib.Notifications.Glitch.Info = function(title, message, duration)
 end
 
 -- Warning notification
-GlitchLib.Notifications.Glitch.Warning = function(title, message, duration)
-    return GlitchLib.Notifications.Glitch.Show({
+GlitchAbst.Notifications.Glitch.Warning = function(title, message, duration)
+    return GlitchAbst.Notifications.Glitch.Show({
         title = title,
         description = message,
         type = 'warning',
@@ -95,7 +95,7 @@ GlitchLib.Notifications.Glitch.Warning = function(title, message, duration)
 end
 
 -- Add box to an existing notification
-GlitchLib.Notifications.Glitch.AddBox = function(notificationId, title, message, color)
+GlitchAbst.Notifications.Glitch.AddBox = function(notificationId, title, message, color)
     if not glitchNotificationsAvailable or not notificationId then return nil end
     
     return exports['glitch-notifications']:AddBoxToNotification(
@@ -108,7 +108,7 @@ GlitchLib.Notifications.Glitch.AddBox = function(notificationId, title, message,
 end
 
 -- Remove a specific box from a notification
-GlitchLib.Notifications.Glitch.RemoveBox = function(notificationId, boxId)
+GlitchAbst.Notifications.Glitch.RemoveBox = function(notificationId, boxId)
     if not glitchNotificationsAvailable or not notificationId or not boxId then return false end
     
     exports['glitch-notifications']:RemoveBoxFromNotification(notificationId, boxId)
@@ -116,7 +116,7 @@ GlitchLib.Notifications.Glitch.RemoveBox = function(notificationId, boxId)
 end
 
 -- Remove an entire notification
-GlitchLib.Notifications.Glitch.Remove = function(notificationId)
+GlitchAbst.Notifications.Glitch.Remove = function(notificationId)
     if not glitchNotificationsAvailable or not notificationId then return false end
     
     exports['glitch-notifications']:RemoveNotification(notificationId)
@@ -124,7 +124,7 @@ GlitchLib.Notifications.Glitch.Remove = function(notificationId)
 end
 
 -- Update content of a notification box
-GlitchLib.Notifications.Glitch.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
+GlitchAbst.Notifications.Glitch.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
     if not glitchNotificationsAvailable or not notificationId or not boxId then return false end
     
     exports['glitch-notifications']:UpdateBoxContent(
@@ -138,7 +138,7 @@ GlitchLib.Notifications.Glitch.Update = function(notificationId, boxId, newMessa
 end
 
 -- Toggle a notification on or off
-GlitchLib.Notifications.Glitch.Toggle = function(id, title, message, color)
+GlitchAbst.Notifications.Glitch.Toggle = function(id, title, message, color)
     if not glitchNotificationsAvailable then return false end
     
     exports['glitch-notifications']:ToggleNotification(
@@ -151,7 +151,7 @@ GlitchLib.Notifications.Glitch.Toggle = function(id, title, message, color)
 end
 
 -- Create fallback function to route to other notification systems
-GlitchLib.Notifications.Fallback = function(method, params)
+GlitchAbst.Notifications.Fallback = function(method, params)
     -- First try ox_lib if available
     if GetResourceState('ox_lib') == 'started' then
         if method == 'Show' then
@@ -170,7 +170,7 @@ GlitchLib.Notifications.Fallback = function(method, params)
     end
     
     -- Try ESX notifications if available
-    if GlitchLib.FrameworkName == 'ESX' then
+    if GlitchAbst.FrameworkName == 'ESX' then
         if method == 'Show' then
             TriggerEvent('esx:showNotification', (params.title and (params.title .. ': ') or '') .. 
                 (params.description or params.message or ''), params.type or 'info')
@@ -180,7 +180,7 @@ GlitchLib.Notifications.Fallback = function(method, params)
     end
     
     -- Try QBCore notifications if available
-    if GlitchLib.FrameworkName == 'QBCore' then
+    if GlitchAbst.FrameworkName == 'QBCore' then
         if method == 'Show' then
             TriggerEvent('QBCore:Notify', params.description or params.message, params.type or 'primary', params.duration or 5000)
             return 1 -- Return dummy ID
@@ -200,10 +200,10 @@ GlitchLib.Notifications.Fallback = function(method, params)
 end
 
 -- Create top-level functions that route to appropriate notification system
-GlitchLib.Notifications.Show = function(params)
+GlitchAbst.Notifications.Show = function(params)
     -- If explicitly configured to use Glitch, then use it when available
     if Config.NotificationSystem == 'glitch' and glitchNotificationsAvailable then
-        return GlitchLib.Notifications.Glitch.Show(params)
+        return GlitchAbst.Notifications.Glitch.Show(params)
     end
     
     -- For auto mode, implement a proper priority order
@@ -233,14 +233,14 @@ GlitchLib.Notifications.Show = function(params)
             end
             
             -- Check for QBCore
-            if system == 'qb' and GlitchLib.FrameworkName == 'QBCore' then
+            if system == 'qb' and GlitchAbst.FrameworkName == 'QBCore' then
                 TriggerEvent('QBCore:Notify', params.description or params.message, 
                     params.type or 'primary', params.duration or 5000)
                 return 2 -- Return dummy ID
             end
             
             -- Check for ESX
-            if system == 'esx' and GlitchLib.FrameworkName == 'ESX' then
+            if system == 'esx' and GlitchAbst.FrameworkName == 'ESX' then
                 TriggerEvent('esx:showNotification', 
                     (params.title and (params.title .. ': ') or '') .. 
                     (params.description or params.message or ''), 
@@ -250,7 +250,7 @@ GlitchLib.Notifications.Show = function(params)
             
             -- Check for Glitch (now lower priority in auto mode)
             if system == 'glitch' and glitchNotificationsAvailable then
-                return GlitchLib.Notifications.Glitch.Show(params)
+                return GlitchAbst.Notifications.Glitch.Show(params)
             end
         end
         
@@ -263,19 +263,19 @@ GlitchLib.Notifications.Show = function(params)
     
     -- For specific configured systems
     if Config.NotificationSystem == 'ox' then
-        return GlitchLib.Notifications.Fallback('Show', params)
+        return GlitchAbst.Notifications.Fallback('Show', params)
     elseif Config.NotificationSystem == 'qb' then
-        return GlitchLib.Notifications.Fallback('Show', params)
+        return GlitchAbst.Notifications.Fallback('Show', params)
     elseif Config.NotificationSystem == 'esx' then
-        return GlitchLib.Notifications.Fallback('Show', params)
+        return GlitchAbst.Notifications.Fallback('Show', params)
     end
     
     -- Last resort fallback
-    return GlitchLib.Notifications.Fallback('Show', params)
+    return GlitchAbst.Notifications.Fallback('Show', params)
 end
 
-GlitchLib.Notifications.Success = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Success = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'success',
@@ -283,8 +283,8 @@ GlitchLib.Notifications.Success = function(title, message, duration)
     })
 end
 
-GlitchLib.Notifications.Error = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Error = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'error',
@@ -292,8 +292,8 @@ GlitchLib.Notifications.Error = function(title, message, duration)
     })
 end
 
-GlitchLib.Notifications.Info = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Info = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'info',
@@ -301,8 +301,8 @@ GlitchLib.Notifications.Info = function(title, message, duration)
     })
 end
 
-GlitchLib.Notifications.Warning = function(title, message, duration)
-    return GlitchLib.Notifications.Show({
+GlitchAbst.Notifications.Warning = function(title, message, duration)
+    return GlitchAbst.Notifications.Show({
         title = title,
         description = message,
         type = 'warning',
@@ -311,47 +311,47 @@ GlitchLib.Notifications.Warning = function(title, message, duration)
 end
 
 -- Basic fallback functions for extended functionality
-GlitchLib.Notifications.AddBox = function(notificationId, title, message, color)
+GlitchAbst.Notifications.AddBox = function(notificationId, title, message, color)
     if (Config.NotificationSystem == 'glitch' or Config.NotificationSystem == 'auto') and glitchNotificationsAvailable then
-        return GlitchLib.Notifications.Glitch.AddBox(notificationId, title, message, color)
+        return GlitchAbst.Notifications.Glitch.AddBox(notificationId, title, message, color)
     end
     -- Most systems don't have AddBox functionality, so fall back to showing a new notification
-    return GlitchLib.Notifications.Show({title = title, description = message})
+    return GlitchAbst.Notifications.Show({title = title, description = message})
 end
 
-GlitchLib.Notifications.RemoveBox = function(notificationId, boxId)
+GlitchAbst.Notifications.RemoveBox = function(notificationId, boxId)
     if (Config.NotificationSystem == 'glitch' or Config.NotificationSystem == 'auto') and glitchNotificationsAvailable then
-        return GlitchLib.Notifications.Glitch.RemoveBox(notificationId, boxId)
+        return GlitchAbst.Notifications.Glitch.RemoveBox(notificationId, boxId)
     end
     return false
 end
 
-GlitchLib.Notifications.Remove = function(notificationId)
+GlitchAbst.Notifications.Remove = function(notificationId)
     if (Config.NotificationSystem == 'glitch' or Config.NotificationSystem == 'auto') and glitchNotificationsAvailable then
-        return GlitchLib.Notifications.Glitch.Remove(notificationId)
+        return GlitchAbst.Notifications.Glitch.Remove(notificationId)
     end
     return false
 end
 
-GlitchLib.Notifications.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
+GlitchAbst.Notifications.Update = function(notificationId, boxId, newMessage, newTitle, newColor)
     if (Config.NotificationSystem == 'glitch' or Config.NotificationSystem == 'auto') and glitchNotificationsAvailable then
-        return GlitchLib.Notifications.Glitch.Update(notificationId, boxId, newMessage, newTitle, newColor)
+        return GlitchAbst.Notifications.Glitch.Update(notificationId, boxId, newMessage, newTitle, newColor)
     end
     -- Most systems don't have Update functionality, so fall back to showing a new notification
-    return GlitchLib.Notifications.Show({title = newTitle, description = newMessage})
+    return GlitchAbst.Notifications.Show({title = newTitle, description = newMessage})
 end
 
-GlitchLib.Notifications.Toggle = function(id, title, message, color)
+GlitchAbst.Notifications.Toggle = function(id, title, message, color)
     if (Config.NotificationSystem == 'glitch' or Config.NotificationSystem == 'auto') and glitchNotificationsAvailable then
-        return GlitchLib.Notifications.Glitch.Toggle(id, title, message, color)
+        return GlitchAbst.Notifications.Glitch.Toggle(id, title, message, color)
     end
     -- Most systems don't have Toggle functionality, so fall back to showing a new notification
-    return GlitchLib.Notifications.Show({title = title, description = message})
+    return GlitchAbst.Notifications.Show({title = title, description = message})
 end
 
 -- Mirror function to UI namespace for backward compatibility
-GlitchLib.UI.Notify = function(params)
-    return GlitchLib.Notifications.Show(params)
+GlitchAbst.UI.Notify = function(params)
+    return GlitchAbst.Notifications.Show(params)
 end
 
 -- Return availability status
