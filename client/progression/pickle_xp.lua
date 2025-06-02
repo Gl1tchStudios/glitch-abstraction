@@ -24,6 +24,11 @@ GlitchAbst.Utils.DebugLog('pickle_xp progression module loaded')
 -- pickle_xp Client
 GlitchAbst.Utils.DebugLog('pickle_xp client module loaded')
 
+-- Get XP data for all categories
+GlitchAbst.Progression.GetXPData = function()
+    return exports.pickle_xp:GetXPData()
+end
+
 -- Get current XP
 GlitchAbst.Progression.GetXP = function(name)
     if not name then
@@ -39,45 +44,6 @@ GlitchAbst.Progression.GetLevel = function(name)
     else
         return exports.pickle_xp:GetLevel()
     end
-end
-
--- Draw XP bar
-GlitchAbst.Progression.DrawXPBar = function(show)
-    if show then
-        exports.pickle_xp:DrawXPBar()
-    else
-        exports.pickle_xp:HideXPBar()
-    end
-end
-
--- Get rank data (ranks, current rank, next rank)
-GlitchAbst.Progression.GetRankData = function()
-    return exports.pickle_xp:GetRankData()
-end
-
--- Get user data (level, xp, rankLevel)
-GlitchAbst.Progression.GetUserData = function()
-    return exports.pickle_xp:GetUserData()
-end
-
--- Check if player has a specific rank
-GlitchAbst.Progression.HasRank = function(rank)
-    if not rank then return false end
-    return exports.pickle_xp:HasRank(rank)
-end
-
--- Toggle rank visibility
-GlitchAbst.Progression.ShowRank = function(state)
-    if state then
-        exports.pickle_xp:ShowRank()
-    else
-        exports.pickle_xp:HideRank()
-    end
-end
-
--- Get XP data for all categories
-GlitchAbst.Progression.GetXPData = function()
-    return exports.pickle_xp:GetXPData()
 end
 
 -- Get required XP for a specific level in a category (shared function)
