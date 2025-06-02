@@ -38,7 +38,7 @@ GlitchAbst.Progression.InitializePlayerXP = function(source, cb)
     return true
 end
 
-GlitchAbst.Progression.GetLevel = function(name, label, xpStart, xpFactor, maxLevel)
+GlitchAbst.Progression.RegisterXPCategory = function(name, label, xpStart, xpFactor, maxLevel)
     if not name or not label then return 0 end
     exports.pickle_xp:RegisterXPCategory(name, label, (xpStart or 1000), (xpFactor or 0.5), (maxLevel or 10))
 end
