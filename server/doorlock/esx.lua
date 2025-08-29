@@ -1,8 +1,6 @@
 -- esx_doorlock Server
 GlitchAbst.Utils.DebugLog('esx_doorlock server module loaded')
 
-local ESX = exports['es_extended']:getSharedObject()
-
 local function IsResourceAvailable(resourceName)
     local state = GetResourceState(resourceName)
     return state == 'started'
@@ -68,6 +66,7 @@ end
 
 -- Get the doors
 doors = GetDoors()
+local ESX = exports['es_extended']:getSharedObject()
 
 -- Set up doorCache
 local doorCache = doors or {}
