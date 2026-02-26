@@ -154,6 +154,20 @@ end
 
 -- Inventory Management
 GlitchAbst.Framework.RegisterUsableItem = function(item, cb)
+    -- If ox_inventory is running it handles usable items exclusively.
+    -- Calling ESX.RegisterUsableItem alongside ox_inventory causes ESX to store
+    -- a cross-resource function reference that it cannot invoke, producing
+    -- "Execution of function reference in script host failed" errors.
+    -- The GlitchAbst.Framework.RegisterUsableItem will be overridden by
+    -- server/inventory/ox.lua once that module loads, so this fallback only
+    -- runs when ox_inventory is NOT present.
+    if GetResourceState('ox_inventory') == 'started' then
+        GlitchAbst.Utils.DebugLog('RegisterUsableItem: ox_inventory active, deferring to inventory module override for: ' .. tostring(item))
+        -- The inventory/ox.lua module overrides this function after load.
+        -- If somehow called before that override, silently skip to avoid the
+        -- cross-resource function reference crash.
+        return false
+    end
     ESX.RegisterUsableItem(item, cb)
     return true
 end

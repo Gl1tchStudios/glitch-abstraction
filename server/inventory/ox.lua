@@ -164,6 +164,65 @@ end
 -- Convenience aliases
 GlitchAbst.Inventory.Confiscate = GlitchAbst.Inventory.ConfiscateInventory
 GlitchAbst.Inventory.Return = GlitchAbst.Inventory.ReturnInventory
+
+-- ── RegisterUsableItem override ───────────────────────────────────────────────
+-- When ox_inventory is active alongside ESX, calling ESX.RegisterUsableItem()
+-- passes a cross-resource function reference through the ox_inventory → ox_lib →
+-- es_extended callback chain, which FiveM cannot marshal and crashes with
+-- "Execution of function reference in script host failed".
+--
+-- ox_inventory has its own RegisterUsableItem export that runs the callback
+-- entirely within the registering resource's context (no cross-resource ref).
+-- We override GlitchAbst.Framework.RegisterUsableItem here so any callers
+-- using the abstraction layer get the correct implementation automatically.
+-- The callback signature exposed to callers stays the same: function(source).
+GlitchAbst.Inventory.RegisterUsableItem = function(item, cb)
+    if not item or not cb then return false end
+
+    -- ox_inventory removed the RegisterUsableItem export in newer versions.
+    -- Wrap in pcall so we can fall back gracefully without crashing.
+    local ok, err = pcall(function()
+        exports.ox_inventory:RegisterUsableItem(item, function(event, itemData, inventory, slot, data)
+            if event == 'usingItem' then
+                local source = inventory and inventory.id
+                if source then
+                    cb(source)
+                end
+            end
+        end)
+    end)
+
+    if ok then
+        GlitchAbst.Utils.DebugLog('Registered usable item via ox_inventory: ' .. tostring(item))
+        return true
+    end
+
+    -- Fallback: newer ox_inventory no longer exports RegisterUsableItem.
+    -- Try ESX.RegisterUsableItem directly (runs in the calling resource's
+    -- context so there is no cross-resource function reference issue).
+    GlitchAbst.Utils.DebugLog('ox_inventory:RegisterUsableItem not available (' .. tostring(err) .. '), falling back to ESX for: ' .. tostring(item))
+    if GlitchAbst.Framework and GlitchAbst.Framework.ESX then
+        local ESX = GlitchAbst.Framework.ESX
+        local esxOk, esxErr = pcall(function()
+            ESX.RegisterUsableItem(item, function(source, done)
+                cb(source)
+                if type(done) == 'function' then done() end
+            end)
+        end)
+        if esxOk then
+            GlitchAbst.Utils.DebugLog('Registered usable item via ESX fallback: ' .. tostring(item))
+            return true
+        end
+        GlitchAbst.Utils.DebugLog('ESX fallback also failed for ' .. tostring(item) .. ': ' .. tostring(esxErr))
+    end
+
+    GlitchAbst.Utils.DebugLog('WARNING: Could not register usable item (no method succeeded): ' .. tostring(item))
+    return false
+end
+
+-- Override the framework-level function so resources calling
+-- GlitchAbst.Framework.RegisterUsableItem() get the ox-native implementation.
+GlitchAbst.Framework.RegisterUsableItem = GlitchAbst.Inventory.RegisterUsableItem
 GlitchAbst.Inventory.OpenInventory = GlitchAbst.Inventory.ForceOpenInventory
 GlitchAbst.Inventory.GetAllItems = GlitchAbst.Inventory.GetItems
 
