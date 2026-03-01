@@ -268,6 +268,79 @@ GlitchAbst.Scaleform.ShowCountdown = function(number, message)
     return handle
 end
 
+-- Show heist finale / reward scaleform (HEIST_AWARDS)
+-- Falls back to ShowMissionPassed if the scaleform fails to load.
+-- _initialText: { missionTextLabel, passFailTextLabel, messageLabel }
+-- _table: array of { stat, value } rows (can be empty)
+-- _money: { startMoney, finishMoney, topText, bottomText, rightHandStat, rightHandStatIcon }
+-- _xp: { xpGained, xpBeforeGain, minLevelXP, maxLevelXP, currentRank, nextRank, rankTextSmall, rankTextBig }
+-- showXP: boolean
+GlitchAbst.Scaleform.ShowHeistFinale = function(_initialText, _table, _money, _xp, showXP)
+    local handle = GlitchAbst.Scaleform.Load("HEIST_AWARDS")
+
+    if not handle then
+        -- Graceful fallback
+        local moneyVal = tonumber(_money and _money.finishMoney) or 0
+        return GlitchAbst.Scaleform.ShowMissionPassed(
+            _initialText and _initialText.missionTextLabel or "COMPLETED",
+            _initialText and _initialText.messageLabel or "",
+            _xp and _xp.xpGained or 0,
+            moneyVal
+        )
+    end
+
+    BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_TOP")
+        ScaleformMovieMethodAddParamTextureNameString(_initialText.missionTextLabel)
+        ScaleformMovieMethodAddParamTextureNameString(_initialText.passFailTextLabel)
+        ScaleformMovieMethodAddParamTextureNameString(_initialText.messageLabel)
+    EndScaleformMovieMethod()
+
+    BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_BOTTOM_BLOCK")
+        ScaleformMovieMethodAddParamInt(#(_table or {}))
+    EndScaleformMovieMethod()
+
+    for _, row in ipairs(_table or {}) do
+        BeginScaleformMovieMethod(handle, "ADD_STATS_ITEM")
+            ScaleformMovieMethodAddParamTextureNameString(row.stat)
+            ScaleformMovieMethodAddParamTextureNameString(row.value)
+            ScaleformMovieMethodAddParamInt(0)
+        EndScaleformMovieMethod()
+    end
+
+    BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_PASS_BLOCK")
+        ScaleformMovieMethodAddParamTextureNameString(_money.topText)
+        ScaleformMovieMethodAddParamTextureNameString(_money.bottomText)
+        ScaleformMovieMethodAddParamFloat(tonumber(_money.startMoney) or 0.0)
+        ScaleformMovieMethodAddParamFloat(tonumber(_money.finishMoney) or 0.0)
+        ScaleformMovieMethodAddParamTextureNameString(_money.rightHandStat)
+        ScaleformMovieMethodAddParamInt(_money.rightHandStatIcon or 0)
+    EndScaleformMovieMethod()
+
+    if showXP and _xp then
+        BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_XP_BLOCK")
+            ScaleformMovieMethodAddParamInt(_xp.xpGained)
+            ScaleformMovieMethodAddParamFloat(_xp.xpBeforeGain or 0.0)
+            ScaleformMovieMethodAddParamFloat(_xp.minLevelXP or 0.0)
+            ScaleformMovieMethodAddParamFloat(_xp.maxLevelXP or 1.0)
+            ScaleformMovieMethodAddParamInt(_xp.currentRank or 1)
+            ScaleformMovieMethodAddParamInt(_xp.nextRank or 2)
+            ScaleformMovieMethodAddParamTextureNameString(_xp.rankTextSmall or "")
+            ScaleformMovieMethodAddParamTextureNameString(_xp.rankTextBig or "")
+        EndScaleformMovieMethod()
+    end
+
+    CreateThread(function()
+        local startTime = GetGameTimer()
+        while GetGameTimer() - startTime < 7000 do
+            Wait(0)
+            DrawScaleformMovieFullscreen(handle, 255, 255, 255, 255, 0)
+        end
+        GlitchAbst.Scaleform.Unload(handle)
+    end)
+
+    return handle
+end
+
 -- Show credits scaleform
 GlitchAbst.Scaleform.ShowCredits = function(items)
     local handle = GlitchAbst.Scaleform.Load("CREDITS_SCROLL")
