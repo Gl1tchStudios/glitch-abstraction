@@ -82,7 +82,9 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
         saveAppearance = options.saveAppearance ~= false, -- Default true
         restoreAppearance = options.restoreAppearance ~= false, -- Default true
         hidePlayer = options.hidePlayer or false,
-        hideEntities = options.hideEntities or {},
+        -- hideSlots: list of slot names (e.g. {"MP_2","MP_3","MP_4"}) to suppress by
+        -- registering invisible dummy peds so GTA doesn't spawn default bald characters.
+        hideSlots = options.hideSlots or {},
         -- Online cutscenes must use flags = 8 (multiplayer context); override if caller forces a value
         flags = options.flags or (isOnline and 8 or 0),
         customEntities = options.customEntities or {},
@@ -114,16 +116,36 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
     
     -- Check if cutscene loaded successfully
     if not HasCutsceneLoaded() then
-        GlitchAbst.Utils.DebugLog('Cutscene failed to load: ' .. cutsceneName)
+        GlitchAbst.Utils.DebugLog('Cutscene failed to load (timeout): ' .. cutsceneName)
         if config.onEnd then config.onEnd(false) end
         return false
     end
-    
+
+    GlitchAbst.Utils.DebugLog('Cutscene loaded OK, registering entities and starting...')
     local playerPed = PlayerPedId()
-    
-    -- Set up cutscene entity streaming flags
-    for entity, flag in pairs(config.hideEntities) do
-        SetCutsceneEntityStreamingFlags(entity, 0, flag)
+
+    -- For each slot in hideSlots: create an invisible dummy ped and register it
+    -- so GTA uses our invisible ped instead of spawning a default bald character.
+    local dummyPeds = {}
+    if #config.hideSlots > 0 then
+        local dummyModel = GetHashKey('mp_m_freemode_01')
+        RequestModel(dummyModel)
+        local mwait = 0
+        while not HasModelLoaded(dummyModel) and mwait < 3000 do
+            Citizen.Wait(100)
+            mwait = mwait + 100
+        end
+        local coords = GetEntityCoords(playerPed)
+        for _, slotName in ipairs(config.hideSlots) do
+            local dummy = CreatePed(4, dummyModel, coords.x, coords.y, coords.z - 200, 0, false, true)
+            SetEntityVisible(dummy, false, false)
+            SetEntityCollision(dummy, false, false)
+            FreezeEntityPosition(dummy, true)
+            RegisterEntityForCutscene(dummy, slotName, 0, dummyModel, 64)
+            table.insert(dummyPeds, dummy)
+            GlitchAbst.Utils.DebugLog('Registered invisible dummy for slot: ' .. slotName)
+        end
+        SetModelAsNoLongerNeeded(dummyModel)
     end
     
     -- Register default player entity
@@ -143,9 +165,17 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
     end
     
     StartCutscene(0)
+    GlitchAbst.Utils.DebugLog('StartCutscene called, waiting for MP_1 entity...')
     
-    while not (DoesCutsceneEntityExist('MP_1', 0)) do
+    local entityTimeout = GetGameTimer() + 5000
+    while not (DoesCutsceneEntityExist('MP_1', 0)) and GetGameTimer() < entityTimeout do
         Citizen.Wait(0)
+    end
+
+    if not DoesCutsceneEntityExist('MP_1', 0) then
+        GlitchAbst.Utils.DebugLog('WARNING: MP_1 entity never appeared — cutscene may still be playing')
+    else
+        GlitchAbst.Utils.DebugLog('MP_1 entity found, cutscene is running')
     end
     
     if config.onStart then
@@ -192,7 +222,14 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
         if config.hidePlayer then
             NetworkSetEntityInvisibleToNetwork(playerPed, false)
         end
-        
+
+        -- Delete dummy peds that were registered to suppress unused slots
+        for _, dummy in ipairs(dummyPeds) do
+            if DoesEntityExist(dummy) then
+                DeleteEntity(dummy)
+            end
+        end
+
         -- Call onEnd callback if provided
         if config.onEnd then
             config.onEnd(true)
