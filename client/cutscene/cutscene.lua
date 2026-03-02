@@ -68,23 +68,31 @@ GlitchAbst.Cutscene.RestorePlayerAppearance = function()
 end
 
 -- Play a cutscene with customization options
+-- Online cutscenes (name starts with "mp_") are auto-detected: flags are
+-- forced to 8 (multiplayer context) and the streaming sphere is pre-loaded
+-- so GTA can resolve all the online content assets before RequestCutscene.
 GlitchAbst.Cutscene.Play = function(cutsceneName, options)
     options = options or {}
     
+    -- Determine whether this is an online cutscene (mp_ prefix)
+    local isOnline = cutsceneName:sub(1, 3) == "mp_"
+
     -- Default options
     local config = {
         saveAppearance = options.saveAppearance ~= false, -- Default true
         restoreAppearance = options.restoreAppearance ~= false, -- Default true
         hidePlayer = options.hidePlayer or false,
         hideEntities = options.hideEntities or {},
-        flags = options.flags or 0,
+        -- Online cutscenes must use flags = 8 (multiplayer context); override if caller forces a value
+        flags = options.flags or (isOnline and 8 or 0),
         customEntities = options.customEntities or {},
         onStart = options.onStart,
         onEnd = options.onEnd,
-        timeoutMs = options.timeoutMs or 10000
+        -- Give online cutscenes extra time to stream in
+        timeoutMs = options.timeoutMs or (isOnline and 20000 or 10000)
     }
     
-    GlitchAbst.Utils.DebugLog('Playing cutscene: ' .. cutsceneName)
+    GlitchAbst.Utils.DebugLog('Playing cutscene: ' .. cutsceneName .. (isOnline and ' [online, flags=8]' or ''))
     
     if IsCutsceneActive() then
         StopCutsceneImmediately()
@@ -93,6 +101,18 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
     -- Save player appearance if needed
     if config.saveAppearance then
         GlitchAbst.Cutscene.SavePlayerAppearance()
+    end
+
+    -- For online cutscenes: pre-load the streaming sphere around the player so
+    -- GTA can resolve all the mp_ content assets before we call RequestCutscene.
+    if isOnline then
+        local coords = GetEntityCoords(PlayerPedId())
+        NewLoadSceneStartSphere(coords.x, coords.y, coords.z, 500.0, 0)
+        local sceneTimeout = GetGameTimer() + 8000
+        while not NewLoadSceneIsReady() and GetGameTimer() < sceneTimeout do
+            Citizen.Wait(0)
+        end
+        NewLoadSceneStop()
     end
     
     -- Request the cutscene
