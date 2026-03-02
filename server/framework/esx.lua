@@ -134,6 +134,32 @@ GlitchAbst.Framework.RemoveMoney = function(source, type, amount)
     return false
 end
 
+GlitchAbst.Framework.GetBankMoney = function(source)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if xPlayer then
+        return xPlayer.getAccount('bank').money
+    end
+    return 0
+end
+
+GlitchAbst.Framework.AddBankMoney = function(source, amount)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if xPlayer then
+        xPlayer.addAccountMoney('bank', amount)
+        return true
+    end
+    return false
+end
+
+GlitchAbst.Framework.RemoveBankMoney = function(source, amount)
+    local xPlayer = ESX.GetPlayerFromId(source)
+    if xPlayer then
+        xPlayer.removeAccountMoney('bank', amount)
+        return true
+    end
+    return false
+end
+
 -- Job Management
 GlitchAbst.Framework.GetJob = function(source)
     local player = ESX.GetPlayerFromId(source)

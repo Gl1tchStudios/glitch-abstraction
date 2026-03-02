@@ -2,9 +2,15 @@
 GlitchAbst.Utils.DebugLog('pickle_xp server module loaded')
 
 GlitchAbst.Progression.GetXPData = function(source, name)
-    if not source or not name then return 0 end
+    if not source or not name then return 0, 0 end
+    -- GetPlayerXPData returns a table keyed by category name:
+    -- { ["electrical"] = { label, xp, level, level_xp }, ... }
+    -- so we index by name, not .level/.xp directly.
     local data = exports.pickle_xp:GetPlayerXPData(source, name)
-    return data.level, data.xp
+    if not data or type(data) ~= 'table' then return 0, 0 end
+    local cat = data[name]
+    if not cat or type(cat) ~= 'table' then return 0, 0 end
+    return cat.level or 0, cat.xp or 0
 end
 
 GlitchAbst.Progression.AddXP = function(source, name, amount)
@@ -28,7 +34,10 @@ end
 GlitchAbst.Progression.GetLevel = function(source, name)
     if not source then return 0 end
     local data = exports.pickle_xp:GetPlayerLevel(source, name)
-    return data.level
+    -- GetPlayerLevel returns a plain number, not a table.
+    -- Guard defensively in case the return type ever changes.
+    if type(data) == 'number' then return data end
+    return (data and data.level) or 0
 end
 
 -- Initialize XP for a player
