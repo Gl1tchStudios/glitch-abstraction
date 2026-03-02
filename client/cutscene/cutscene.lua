@@ -103,18 +103,6 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
         GlitchAbst.Cutscene.SavePlayerAppearance()
     end
 
-    -- For online cutscenes: pre-load the streaming sphere around the player so
-    -- GTA can resolve all the mp_ content assets before we call RequestCutscene.
-    if isOnline then
-        local coords = GetEntityCoords(PlayerPedId())
-        NewLoadSceneStartSphere(coords.x, coords.y, coords.z, 500.0, 0)
-        local sceneTimeout = GetGameTimer() + 8000
-        while not NewLoadSceneIsReady() and GetGameTimer() < sceneTimeout do
-            Citizen.Wait(0)
-        end
-        NewLoadSceneStop()
-    end
-    
     -- Request the cutscene
     RequestCutscene(cutsceneName, config.flags)
     
