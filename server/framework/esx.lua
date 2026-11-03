@@ -4,7 +4,7 @@ if not GlitchAbst then
 end
 
 GlitchAbst.Utils = GlitchAbst.Utils or {}
-GlitchAbst.Utils.DebugLog = GlitchAbst.Utils.DebugLog or function(message) print('[GlitchAbst] ' .. message) end
+GlitchAbst.Utils.DebugLog = GlitchAbst.Utils.DebugLog or function(message) print('[GlitchAbst] ' .. tostring(message)) end
 
 -- Check proper framework
 if GlitchAbst.FrameworkName ~= 'ESX' then
@@ -24,14 +24,12 @@ if success and result then
     ESX = result
     GlitchAbst.Utils.DebugLog('ESX server framework module loaded (via export)')
 else
-    -- Method 2: Via event (legacy ESX support)
-    TriggerEvent('esx:getSharedObject', function(obj) 
+    -- Method 2: Via event (legacy ESX). TriggerEvent runs the handler straight away,
+    -- so no wait is needed (and none is allowed while the resource is loading).
+    TriggerEvent('esx:getSharedObject', function(obj)
         ESX = obj
     end)
-    
-    -- Give it a moment to complete
-    Wait(100)
-    
+
     if ESX then
         GlitchAbst.Utils.DebugLog('ESX server framework module loaded (via event)')
     else
@@ -46,9 +44,32 @@ GlitchAbst.Framework.ESX = ESX
 GlitchAbst.Framework.Type = 'ESX'
 GlitchAbst.Utils.DebugLog('ESX server framework module loaded successfully')
 
+local MoneyArgs = GlitchAbst.Utils.MoneyArgs
+
+-- Account names used by other frameworks -> ESX account names
+local ACCOUNTS = { cash = 'money', money = 'money', bank = 'bank', dirty = 'black_money', black_money = 'black_money', blackmoney = 'black_money' }
+local function Account(name)
+    if not name then return 'money' end
+    return ACCOUNTS[name] or name
+end
+
+local function GetPlayer(source)
+    source = tonumber(source)
+    if not source then return nil end
+    return ESX.GetPlayerFromId(source)
+end
+
+local function Balance(xPlayer, account)
+    if account == 'money' and xPlayer.getMoney then
+        return tonumber(xPlayer.getMoney()) or 0
+    end
+    local acc = xPlayer.getAccount and xPlayer.getAccount(account)
+    return acc and tonumber(acc.money) or 0
+end
+
 -- Framework Functions
 
--- Get all online players
+-- Get all online players (ESX player objects)
 GlitchAbst.Framework.GetPlayers = function()
     local players = {}
     for _, playerId in ipairs(ESX.GetPlayers()) do
@@ -62,27 +83,37 @@ end
 
 -- Get player by server ID
 GlitchAbst.Framework.GetPlayer = function(source)
-    return ESX.GetPlayerFromId(source)
+    return GetPlayer(source)
+end
+
+-- Get player from identifier
+GlitchAbst.Framework.GetPlayerFromIdentifier = function(identifier)
+    if ESX.GetPlayerFromIdentifier then
+        return ESX.GetPlayerFromIdentifier(identifier)
+    end
+    return nil
 end
 
 -- Register a server callback
 GlitchAbst.Framework.RegisterCallback = function(name, cb)
-    -- Directly use ESX.RegisterServerCallback
     ESX.RegisterServerCallback(name, cb)
-    
-    -- Verify the callback was registered
-    if not ESX.DoesServerCallbackExist(name) then
+
+    -- Verify the callback was registered (older ESX has no way to check)
+    if ESX.DoesServerCallbackExist and not ESX.DoesServerCallbackExist(name) then
         GlitchAbst.Utils.DebugLog('WARNING: Failed to register callback: ' .. name)
         return false
     end
-    
+
     GlitchAbst.Utils.DebugLog('Registered server callback: ' .. name)
     return true
 end
 
 -- Add a function to check if callback exists
 GlitchAbst.Framework.DoesCallbackExist = function(name)
-    return ESX.DoesServerCallbackExist(name)
+    if ESX.DoesServerCallbackExist then
+        return ESX.DoesServerCallbackExist(name)
+    end
+    return nil
 end
 
 -- Trigger client callback
@@ -91,86 +122,87 @@ GlitchAbst.Framework.TriggerClientCallback = function(source, name, cb, ...)
         GlitchAbst.Utils.DebugLog('ERROR: Invalid source provided to TriggerClientCallback')
         return false
     end
-    
-    ESX.TriggerClientCallback(name, source, function(...)
+    if not ESX.TriggerClientCallback then
+        GlitchAbst.Utils.DebugLog('ERROR: this ESX version has no TriggerClientCallback')
+        return false
+    end
+
+    ESX.TriggerClientCallback(source, name, function(...)
         if cb then cb(...) end
     end, ...)
-    
+
     return true
 end
 
 -- Money Management
-GlitchAbst.Framework.GetMoney = function(source, type)
-    local xPlayer = ESX.GetPlayerFromId(source)
-    if xPlayer then
-        if type == 'bank' then
-            return xPlayer.getAccount('bank').money
-        elseif type == 'cash' then
-            return xPlayer.getMoney()
-        elseif type == 'dirty' then
-            return xPlayer.getAccount('black_money').money
-        else
-            return xPlayer.getAccount(type).money
-        end
-    end
-    return
+-- Every money function takes (source, amount) or (source, account, amount).
+-- Account defaults to cash ('money'); 'cash' and 'dirty' are accepted as well.
+
+GlitchAbst.Framework.GetMoney = function(source, account)
+    local xPlayer = GetPlayer(source)
+    if not xPlayer then return 0 end
+    return Balance(xPlayer, Account(account))
 end
 
-GlitchAbst.Framework.AddMoney = function(source, type, amount)
-    local xPlayer = ESX.GetPlayerFromId(source)
-    if xPlayer then
-        xPlayer.addAccountMoney(type, amount)
-        return true
+GlitchAbst.Framework.AddMoney = function(source, a, b)
+    local account, amount = MoneyArgs(a, b)
+    if not amount or amount < 0 then return false end
+    if amount == 0 then return true end
+    local xPlayer = GetPlayer(source)
+    if not xPlayer then return false end
+    account = Account(account)
+    if account == 'money' and xPlayer.addMoney then
+        xPlayer.addMoney(amount, 'GlitchAbst AddMoney')
+    else
+        xPlayer.addAccountMoney(account, amount, 'GlitchAbst AddMoney')
     end
-    return false
+    return true
 end
 
-GlitchAbst.Framework.RemoveMoney = function(source, type, amount)
-    local xPlayer = ESX.GetPlayerFromId(source)
-    if xPlayer then
-        xPlayer.removeAccountMoney(type, amount)
-        return true
+-- Returns false when the player cannot pay (ESX itself would let the balance go negative)
+GlitchAbst.Framework.RemoveMoney = function(source, a, b)
+    local account, amount = MoneyArgs(a, b)
+    if not amount or amount < 0 then return false end
+    if amount == 0 then return true end
+    local xPlayer = GetPlayer(source)
+    if not xPlayer then return false end
+    account = Account(account)
+    if Balance(xPlayer, account) < amount then return false end
+    if account == 'money' and xPlayer.removeMoney then
+        xPlayer.removeMoney(amount, 'GlitchAbst RemoveMoney')
+    else
+        xPlayer.removeAccountMoney(account, amount, 'GlitchAbst RemoveMoney')
     end
-    return false
+    return true
 end
 
 GlitchAbst.Framework.GetBankMoney = function(source)
-    local xPlayer = ESX.GetPlayerFromId(source)
-    if xPlayer then
-        return xPlayer.getAccount('bank').money
-    end
-    return 0
+    return GlitchAbst.Framework.GetMoney(source, 'bank')
 end
 
 GlitchAbst.Framework.AddBankMoney = function(source, amount)
-    local xPlayer = ESX.GetPlayerFromId(source)
-    if xPlayer then
-        xPlayer.addAccountMoney('bank', amount)
-        return true
-    end
-    return false
+    return GlitchAbst.Framework.AddMoney(source, 'bank', amount)
 end
 
 GlitchAbst.Framework.RemoveBankMoney = function(source, amount)
-    local xPlayer = ESX.GetPlayerFromId(source)
-    if xPlayer then
-        xPlayer.removeAccountMoney('bank', amount)
-        return true
-    end
-    return false
+    return GlitchAbst.Framework.RemoveMoney(source, 'bank', amount)
 end
 
 -- Job Management
 GlitchAbst.Framework.GetJob = function(source)
-    local player = ESX.GetPlayerFromId(source)
+    local player = GetPlayer(source)
     if player then
-        return player.getJob()
+        local job = player.getJob and player.getJob() or player.job
+        if job then return job end
     end
     return {name = 'unemployed', grade = 0}
 end
 
 GlitchAbst.Framework.SetJob = function(source, job, grade)
-    local player = ESX.GetPlayerFromId(source)
+    local player = GetPlayer(source)
+    if player and ESX.DoesJobExist and not ESX.DoesJobExist(job, grade) then
+        return false
+    end
     if player then
         player.setJob(job, grade)
         return true
@@ -180,18 +212,12 @@ end
 
 -- Inventory Management
 GlitchAbst.Framework.RegisterUsableItem = function(item, cb)
+    if not item or not cb then return false end
     -- If ox_inventory is running it handles usable items exclusively.
-    -- Calling ESX.RegisterUsableItem alongside ox_inventory causes ESX to store
-    -- a cross-resource function reference that it cannot invoke, producing
-    -- "Execution of function reference in script host failed" errors.
-    -- The GlitchAbst.Framework.RegisterUsableItem will be overridden by
-    -- server/inventory/ox.lua once that module loads, so this fallback only
-    -- runs when ox_inventory is NOT present.
+    -- server/inventory/ox.lua replaces this function when that module loads, so this
+    -- version only runs when ox_inventory is NOT present.
     if GetResourceState('ox_inventory') == 'started' then
         GlitchAbst.Utils.DebugLog('RegisterUsableItem: ox_inventory active, deferring to inventory module override for: ' .. tostring(item))
-        -- The inventory/ox.lua module overrides this function after load.
-        -- If somehow called before that override, silently skip to avoid the
-        -- cross-resource function reference crash.
         return false
     end
     ESX.RegisterUsableItem(item, cb)
@@ -204,24 +230,27 @@ GlitchAbst.Framework.UseItem = function(source, item)
 end
 
 GlitchAbst.Framework.HasItem = function(source, item, count)
-    count = count or 1
-    
+    count = tonumber(count) or 1
+
     if GlitchAbst.Inventory and GlitchAbst.Inventory.GetItemCount then
         -- Use dedicated inventory system if available
-        return GlitchAbst.Inventory.GetItemCount(source, item) >= count
+        return (tonumber(GlitchAbst.Inventory.GetItemCount(source, item)) or 0) >= count
     end
-    
-    local player = ESX.GetPlayerFromId(source)
+
+    local player = GetPlayer(source)
     if player then
         local esxItem = player.getInventoryItem(item)
-        return esxItem and esxItem.count >= count
+        return esxItem ~= nil and (tonumber(esxItem.count) or 0) >= count
     end
     return false
 end
 
 GlitchAbst.Framework.Notify = function(source, message, type, length)
-    TriggerClientEvent('esx:showNotification', source, message)
+    if source then
+        TriggerClientEvent('esx:showNotification', source, message, type, length)
+    end
     return true
 end
 
 GlitchAbst.Utils.DebugLog('ESX Framework module loaded')
+return true

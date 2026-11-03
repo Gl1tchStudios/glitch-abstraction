@@ -14,314 +14,216 @@ if not GlitchAbst then
         Utils = {},
         IsReady = false
     }
-    
+
     GlitchAbst.Utils.DebugLog = function(message)
-        print('[GlitchAbst] ' .. message)
+        print('[GlitchAbst] ' .. tostring(message))
     end
 end
 
-local hasInitialized = false
+-- Run once, even if something includes this file twice
+if GlitchAbst._clientCoreLoaded then return end
+GlitchAbst._clientCoreLoaded = true
 
-local function InitializeLibrary()
-    -- Check if already initialized and exit early
-    if hasInitialized then
-        GlitchAbst.Utils.DebugLog('GlitchAbst already initialized, skipping duplicate initialization')
-        return false
-    end
-    
-    hasInitialized = true
-    GlitchAbst.Utils.DebugLog('Initializing GlitchAbst client...')
-    
-    -- Load framework support with nil check
-    local frameworkLoaded = false
-    if Config and Config.Framework then
-        for _, fw in ipairs(Config.Framework) do
-            if GetResourceState(fw.resourceName) ~= 'missing' then
-                local frameworkName = fw.name
-                GlitchAbst.Utils.DebugLog('Detected framework: ' .. frameworkName)
-                
-                local implementationName = frameworkName
-                if Config.FrameworkMapping and Config.FrameworkMapping[frameworkName] then
-                    implementationName = Config.FrameworkMapping[frameworkName]
-                    GlitchAbst.Utils.DebugLog('Using implementation: ' .. implementationName)
+local Utils = GlitchAbst.Utils
+local Started = Utils.IsStarted
+
+-- Config names -> module file names (the files do not all match the config names)
+local FRAMEWORK_FILES = { ESX = 'esx', QBCore = 'qbcore' }
+local UI_FILES = { ox = 'ox', qb = 'qbcore', qbcore = 'qbcore', esx = 'esx' }
+local TARGET_FILES = { ox = 'ox', qb = 'qb', esx = 'bt' }
+local INVENTORY_FILES = { ox = 'ox', qb = 'qbcore', esx = 'esx' }
+local DOORLOCK_FILES = { ox = 'ox', qb = 'qbcore', esx = 'esx' }
+local NOTIFY_FILES = { glitch = 'glitch', ox = 'ox', qb = 'qbcore', esx = 'esx' }
+
+local loaded = {}
+
+local function LoadFirst(kind, list, dir, files, choice, allow)
+    for _, entry in ipairs(list or {}) do
+        local wanted = (choice == nil or choice == 'auto' or choice == entry.name)
+        if wanted and Started(entry.resourceName) and (not allow or allow(entry)) then
+            local file = files[entry.name]
+            if file then
+                local ok, res = Utils.LoadModule(dir .. file .. '.lua')
+                if ok then
+                    Utils.DebugLog('Loaded ' .. kind .. ' module: ' .. entry.name)
+                    return entry.name
                 end
-                
-                -- Load the framework module
-                local status, result = pcall(function()
-                    local frameworkModule = LoadResourceFile(GetCurrentResourceName(), 'client/framework/' .. string.lower(implementationName) .. '.lua')
-                    if frameworkModule then
-                        local loadedModule = load(frameworkModule)
-                        if loadedModule then
-                            local success = loadedModule()
-                            if success then
-                                GlitchAbst.Framework.Type = frameworkName
-                                frameworkLoaded = true
-                                return true
-                            end
-                        end
-                    end
-                    error('Failed to load framework module')
-                end)
-                
-                if status and result then
-                    GlitchAbst.Utils.DebugLog('Framework loaded successfully')
-                    break
-                else
-                    GlitchAbst.Utils.DebugLog('Failed to load framework: ' .. tostring(result))
-                end
+                Utils.DebugLog('Could not load ' .. kind .. ' module ' .. entry.name .. ': ' .. tostring(res))
             end
         end
+    end
+    return nil
+end
+
+local function LoadFramework()
+    if loaded.framework then return end
+    if not GlitchAbst.FrameworkName or GlitchAbst.FrameworkName == 'unknown' then
+        GlitchAbst.FrameworkName = Utils.DetectFramework()
+    end
+    local name = GlitchAbst.FrameworkName
+    local file = FRAMEWORK_FILES[name]
+    if not file then
+        Utils.DebugLog('No supported framework running')
+        return
+    end
+    local ok, res = Utils.LoadModule('client/framework/' .. file .. '.lua')
+    if ok then
+        GlitchAbst.Framework.Type = name
+        loaded.framework = name
+        Utils.DebugLog('Framework loaded: ' .. name)
     else
-        GlitchAbst.Utils.DebugLog('WARNING: Config.Framework is missing')
+        Utils.DebugLog('Failed to load framework ' .. name .. ': ' .. tostring(res))
+    end
+end
+
+local function LoadUI()
+    if loaded.ui then return end
+    -- Detect again on every attempt: ox_lib may not have been running at the first pass
+    if not GlitchAbst.UISystem or Config.UISystem == 'auto' then
+        GlitchAbst.UISystem = Utils.DetectUISystem()
+    end
+    local uiSystem = GlitchAbst.UISystem or 'ox'
+    local file = UI_FILES[string.lower(uiSystem)]
+    local ok, res = false, 'unknown UI system ' .. tostring(uiSystem)
+    if file then ok, res = Utils.LoadModule('client/ui/' .. file .. '.lua') end
+
+    if not ok and uiSystem ~= 'ox' and Started('ox_lib') then
+        Utils.DebugLog('UI ' .. uiSystem .. ' failed (' .. tostring(res) .. '), falling back to ox_lib')
+        GlitchAbst.UISystem = 'ox'
+        uiSystem = 'ox'
+        ok, res = Utils.LoadModule('client/ui/ox.lua')
     end
 
-    if not frameworkLoaded then
-        GlitchAbst.Utils.DebugLog('No supported framework found')
-    end
-
-    -- Load UI system with nil check
-    local uiLoaded = false
-    local uiSystem = GlitchAbst.UISystem or 'native'
-
-    GlitchAbst.Utils.DebugLog('Loading UI system: ' .. uiSystem)
-
-    local status, err = pcall(function()
-        local uiModule = LoadResourceFile(GetCurrentResourceName(), 'client/ui/' .. string.lower(uiSystem) .. '.lua')
-        if uiModule then
-            load(uiModule)()
-            GlitchAbst.UI.Type = uiSystem
-            uiLoaded = true
-        else
-            error('UI module not found: ' .. uiSystem)
-        end
-    end)
-
-    if not status then
-        GlitchAbst.Utils.DebugLog('Failed to load UI system: ' .. err)
-        
-        if uiSystem ~= 'ox' and GetResourceState('ox_lib') == 'started' then
-            GlitchAbst.Utils.DebugLog('Attempting fallback to ox_lib UI')
-            
-            local fallbackStatus, fallbackErr = pcall(function()
-                local oxModule = LoadResourceFile(GetCurrentResourceName(), 'client/ui/ox.lua')
-                if oxModule then
-                    load(oxModule)()
-                    GlitchAbst.UI.Type = 'ox'
-                    uiLoaded = true
-                else
-                    error('Fallback UI module not found')
-                end
-            end)
-            
-            if not fallbackStatus then
-                GlitchAbst.Utils.DebugLog('Fallback to ox_lib UI failed: ' .. fallbackErr)
-            end
-        end
-    end
-
-    if not uiLoaded then
-        GlitchAbst.Utils.DebugLog('WARNING: No UI system loaded, using basic native UI')
-        
-        -- Define basic native UI functions as fallback
-        GlitchAbst.UI.ShowNotification = function(message)
-            SetNotificationTextEntry('STRING')
-            AddTextComponentString(message)
-            DrawNotification(false, true)
-        end
-        
-        GlitchAbst.UI.Type = 'native'
-    end
-    
-    local targetLoaded = false
-    if Config and Config.Target then
-        for _, tg in ipairs(Config.Target) do
-            if GetResourceState(tg.resourceName) == 'started' then
-                GlitchAbst.Utils.DebugLog('Loading target system: ' .. tg.name)
-                
-                local status, err = pcall(function()
-                    local targetModule = LoadResourceFile(GetCurrentResourceName(), 'client/target/' .. string.lower(tg.name) .. '.lua')
-                    if targetModule then
-                        load(targetModule)()
-                        GlitchAbst.Target.Type = tg.name
-                        targetLoaded = true
-                    else
-                        error('Target module not found')
-                    end
-                end)
-                
-                if status then
-                    break
-                else
-                    GlitchAbst.Utils.DebugLog('Failed to load target system: ' .. err)
-                end
-            end
-        end
-    end
-    
-    -- Load door lock system
-    local doorLockLoaded = false
-    if Config and Config.DoorLock then
-        for _, dl in ipairs(Config.DoorLock) do
-            if GetResourceState(dl.resourceName) ~= 'missing' then
-                GlitchAbst.Utils.DebugLog('Loading door lock system: ' .. dl.name)
-                
-                -- Load the appropriate door lock module
-                local status, err = pcall(function()
-                    local doorLockModule = LoadResourceFile(GetCurrentResourceName(), 'client/doorlock/' .. string.lower(dl.name) .. '.lua')
-                    if doorLockModule then
-                        load(doorLockModule)()
-                        GlitchAbst.DoorLock.Type = dl.name
-                        doorLockLoaded = true
-                    else
-                        error('Door lock module not found')
-                    end
-                end)
-                
-                if not status then
-                    GlitchAbst.Utils.DebugLog('Failed to load door lock system: ' .. err)
-                end
-                
-                break
-            end
-        end
+    if ok then
+        GlitchAbst.UI.Type = uiSystem
+        loaded.ui = uiSystem
     else
-        GlitchAbst.Utils.DebugLog('WARNING: Config.DoorLock is missing')
+        Utils.DebugLog('WARNING: No UI system loaded (' .. tostring(res) .. ')')
     end
-    
-    if not doorLockLoaded then
-        GlitchAbst.Utils.DebugLog('No supported door lock system found')
-    end
-    
-    -- Load progression system
-    local progressionLoaded = false
-    if GetResourceState('pickle_xp') ~= 'missing' then
-        GlitchAbst.Utils.DebugLog('Loading progression system: pickle_xp')
-        
-        -- Load pickle_xp module
-        local status, err = pcall(function()
-            local progressionModule = LoadResourceFile(GetCurrentResourceName(), 'client/progression/pickle_xp.lua')
-            if progressionModule then
-                load(progressionModule)()
-                GlitchAbst.Progression.Type = 'pickle_xp'
-                progressionLoaded = true
-            else
-                error('Progression module not found')
-            end
-        end)
-        
-        if not status then
-            GlitchAbst.Utils.DebugLog('Failed to load progression system: ' .. err)
-        end
-    end
-    
-    if not progressionLoaded then
-        GlitchAbst.Utils.DebugLog('No supported progression system found')
-    end
+end
 
-    -- Load notification system with proper resource checking
-    local notificationLoaded = false
-    
-    if Config and Config.NotificationSystem ~= nil and Config.NotificationSystem ~= 'auto' then
-        local notifSystem = Config.NotificationSystem
-        
-        local resourceName = nil
-        if Config.Notifications then
-            for _, notif in ipairs(Config.Notifications) do
-                if notif.name == notifSystem then
-                    resourceName = notif.resourceName
-                    break
-                end
-            end
-        end
-        
-        if resourceName and GetResourceState(resourceName) == 'started' then
-            GlitchAbst.Utils.DebugLog('Using configured notification system: ' .. notifSystem)
-            
-            local status, err = pcall(function()
-                local notifModule = LoadResourceFile(GetCurrentResourceName(), 'client/notifications/' .. string.lower(notifSystem) .. '.lua')
-                if notifModule then
-                    load(notifModule)()
-                    GlitchAbst.Notifications.Type = notifSystem
-                    notificationLoaded = true
-                else
-                    error('Notification module not found: ' .. notifSystem)
-                end
-            end)
-            
-            if not status then
-                GlitchAbst.Utils.DebugLog('Failed to load notification system: ' .. err)
-            end
-        else
-            GlitchAbst.Utils.DebugLog('Configured notification system ' .. notifSystem .. ' resource not available')
-        end
-    elseif Config and Config.Notifications then
-        for _, notif in ipairs(Config.Notifications) do
-            if GetResourceState(notif.resourceName) == 'started' then
-                GlitchAbst.Utils.DebugLog('Loading notification system: ' .. notif.name)
-                
-                local status, err = pcall(function()
-                    local notifModule = LoadResourceFile(GetCurrentResourceName(), 'client/notifications/' .. string.lower(notif.name) .. '.lua')
-                    if notifModule then
-                        load(notifModule)()
-                        GlitchAbst.Notifications.Type = notif.name
-                        notificationLoaded = true
-                    else
-                        error('Notification module not found: ' .. notif.name)
-                    end
-                end)
-                
-                if status then
-                    break
-                else
-                    GlitchAbst.Utils.DebugLog('Failed to load notification system: ' .. err)
-                end
-            end
-        end
+local function LoadTarget()
+    if loaded.target then return end
+    local name = LoadFirst('target', Config.Target, 'client/target/', TARGET_FILES, Config.TargetSystem)
+    if name then
+        GlitchAbst.Target.Type = name
+        loaded.target = name
     end
+end
 
-    if not notificationLoaded then
-        GlitchAbst.Utils.DebugLog('No standalone notification system found, using framework notifications')
-        
-        GlitchAbst.Notifications.Show = function(params)
-            GlitchAbst.Framework.Notify(params.description or params.message or params.title, params.type)
-        end
-        
-        GlitchAbst.Notifications.Success = function(title, message, duration)
-            GlitchAbst.Framework.Notify(message or title, 'success', duration)
-        end
-        
-        GlitchAbst.Notifications.Error = function(title, message, duration)
-            GlitchAbst.Framework.Notify(message or title, 'error', duration)
-        end
-        
-        GlitchAbst.Notifications.Info = function(title, message, duration)
-            GlitchAbst.Framework.Notify(message or title, 'info', duration)
-        end
-        
-        GlitchAbst.Notifications.Warning = function(title, message, duration)
-            GlitchAbst.Framework.Notify(message or title, 'warning', duration)
-        end
-        
-        GlitchAbst.UI.Notify = function(params)
-            GlitchAbst.Notifications.Show(params)
-        end
-        
-        GlitchAbst.Notifications.Type = 'framework'
-        notificationLoaded = true
-    end
-
-    local status, err = pcall(function()
-        local scaleformModule = LoadResourceFile(GetCurrentResourceName(), 'client/scaleform/scaleform.lua')
-        if scaleformModule then
-            load(scaleformModule)()
-            GlitchAbst.Utils.DebugLog('Scaleform module loaded')
-        else
-            error('Scaleform module not found, using empty functions')
-        end
+local function LoadInventory()
+    if loaded.inventory then return end
+    local name = LoadFirst('inventory', Config.Inventory, 'client/inventory/', INVENTORY_FILES, Config.InventorySystem, function(entry)
+        if entry.name == 'esx' then return GlitchAbst.FrameworkName == 'ESX' end
+        return true
     end)
+    if name then
+        GlitchAbst.Inventory.Type = name
+        loaded.inventory = name
+    end
+end
 
-    if not status then
-        GlitchAbst.Utils.DebugLog('Failed to load scaleform module: ' .. err)
+local function LoadDoorLock()
+    if loaded.doorlock then return end
+    local name = LoadFirst('door lock', Config.DoorLock, 'client/doorlock/', DOORLOCK_FILES, Config.DoorlockSystem, function(entry)
+        if entry.name == 'qb' then return Started('qb-core') end
+        if entry.name == 'esx' then return Started('es_extended') end
+        return true
+    end)
+    if name then
+        GlitchAbst.DoorLock.Type = name
+        loaded.doorlock = name
+    end
+end
+
+-- Which XP module to use: Config.xpSystem 'glitch_xpSystem', 'pickle_xp' or 'auto'.
+-- The XP resource usually starts after this library, so 'auto' only needs it to exist.
+local function XPChoice()
+    local choice = Config.xpSystem or 'auto'
+    if choice ~= 'auto' then return choice end
+    if GetResourceState('glitch-xpSystem') ~= 'missing' or GetResourceState('glitch_xpSystem') ~= 'missing' then
+        return 'glitch_xpSystem'
+    end
+    if GetResourceState('pickle_xp') ~= 'missing' then return 'pickle_xp' end
+    return nil
+end
+local XP_FILES = { glitch_xpSystem = 'glitch_xpsystem', pickle_xp = 'pickle_xp' }
+
+local function LoadProgression()
+    if loaded.progression then return end
+    local choice = XPChoice()
+    local xpFile = choice and XP_FILES[choice]
+    if not xpFile then return end
+    local ok, res = Utils.LoadModule('client/progression/' .. xpFile .. '.lua')
+    if ok then
+        GlitchAbst.Progression.Type = choice
+        loaded.progression = choice
+    else
+        Utils.DebugLog('Could not load progression module: ' .. tostring(res))
+    end
+end
+
+-- Last resort: route notifications through the framework's own notify
+local function FrameworkNotifications()
+    GlitchAbst.Notifications.Show = function(params)
+        params = type(params) == 'table' and params or { description = tostring(params) }
+        if GlitchAbst.Framework.Notify then
+            GlitchAbst.Framework.Notify(params.description or params.message or params.title, params.type, params.duration)
+        else
+            BeginTextCommandThefeedPost('STRING')
+            AddTextComponentSubstringPlayerName(tostring(params.description or params.message or params.title or ''))
+            EndTextCommandThefeedPostTicker(false, true)
+        end
+        return 1
+    end
+    GlitchAbst.Notifications.Success = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({ title = title, description = message or title, type = 'success', duration = duration })
+    end
+    GlitchAbst.Notifications.Error = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({ title = title, description = message or title, type = 'error', duration = duration })
+    end
+    GlitchAbst.Notifications.Info = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({ title = title, description = message or title, type = 'info', duration = duration })
+    end
+    GlitchAbst.Notifications.Warning = function(title, message, duration)
+        return GlitchAbst.Notifications.Show({ title = title, description = message or title, type = 'warning', duration = duration })
+    end
+    GlitchAbst.UI.Notify = function(params)
+        return GlitchAbst.Notifications.Show(params)
+    end
+    GlitchAbst.Notifications.Type = 'framework'
+end
+
+local function LoadNotifications(final)
+    if loaded.notifications and loaded.notifications ~= 'framework' then return end
+
+    local choice = Config.NotificationSystem
+    local name
+    if choice and choice ~= 'auto' then
+        name = LoadFirst('notification', Config.Notifications, 'client/notifications/', NOTIFY_FILES, choice)
+        if not name then Utils.DebugLog('Configured notification system ' .. choice .. ' is not available') end
+    end
+    if not name then
+        name = LoadFirst('notification', Config.Notifications, 'client/notifications/', NOTIFY_FILES, 'auto')
+    end
+
+    if name then
+        GlitchAbst.Notifications.Type = name
+        loaded.notifications = name
+    elseif final or not loaded.notifications then
+        Utils.DebugLog('No standalone notification system found, using framework notifications')
+        FrameworkNotifications()
+        loaded.notifications = 'framework'
+    end
+end
+
+local function LoadExtras()
+    if loaded.extras then return end
+    loaded.extras = true
+
+    local ok, err = Utils.LoadModule('client/scaleform/scaleform.lua')
+    if not ok then
+        Utils.DebugLog('Failed to load scaleform module: ' .. tostring(err))
         GlitchAbst.Scaleform = GlitchAbst.Scaleform or {}
         GlitchAbst.Scaleform.Active = {}
         GlitchAbst.Scaleform.Load = function() return nil end
@@ -331,38 +233,56 @@ local function InitializeLibrary()
         GlitchAbst.Scaleform.Render3D = function() return false end
     end
 
-    local status, err = pcall(function()
-        local cutsceneModule = LoadResourceFile(GetCurrentResourceName(), 'client/cutscene/cutscene.lua')
-        if cutsceneModule then
-            load(cutsceneModule)()
-            GlitchAbst.Utils.DebugLog('Cutscene module loaded')
-        else
-            error('Cutscene module not found')
-        end
-    end)
-
-    if not GlitchAbst.UI.Notify then
-        print("WARNING: Setting up emergency notification fallback")
-        GlitchAbst.UI.Notify = function(params)
-            params = type(params) == 'table' and params or {message = tostring(params)}
-            SetNotificationTextEntry('STRING')
-            AddTextComponentString(params.message or params.description or "Notification")
-            DrawNotification(false, true)
-        end
-    end
-    
-    GlitchAbst.IsReady = frameworkLoaded
-    GlitchAbst.Utils.DebugLog('GlitchAbst initialization complete')
-    
-    TriggerEvent('GlitchAbst:ready')
-    
-    return true
+    ok, err = Utils.LoadModule('client/cutscene/cutscene.lua')
+    if not ok then Utils.DebugLog('Failed to load cutscene module: ' .. tostring(err)) end
 end
 
--- Initialize when resource starts
+local function LoadAll(final)
+    LoadFramework()
+    LoadUI()
+    LoadTarget()
+    LoadInventory()
+    LoadDoorLock()
+    LoadProgression()
+    LoadNotifications(final)
+    LoadExtras()
+
+    if not GlitchAbst.UI.Notify then
+        GlitchAbst.UI.Notify = function(params)
+            params = type(params) == 'table' and params or {message = tostring(params)}
+            BeginTextCommandThefeedPost('STRING')
+            AddTextComponentSubstringPlayerName(tostring(params.message or params.description or 'Notification'))
+            EndTextCommandThefeedPostTicker(false, true)
+        end
+    end
+end
+
+-- No XP system: safe defaults so callers never index nil
+local function ProgressionDefaults()
+    local P = GlitchAbst.Progression
+    P.Type = P.Type or 'none'
+    P.IsAvailable = P.IsAvailable or function() return false end
+    P.GetXPData = P.GetXPData or function() return {} end
+    P.GetXP = P.GetXP or function() return 0 end
+    P.GetLevel = P.GetLevel or function() return 0 end
+    P.GetLevelXP = P.GetLevelXP or function() return 0 end
+    P.GetCategoryLevel = P.GetCategoryLevel or function() return 0 end
+end
+
+-- First pass straight away, so resources that grab the library while they start
+-- already get working functions.
+LoadAll(false)
+
+-- Second pass for resources that started after us (glitch-notifications, the XP
+-- system, a late framework), then announce that the library is ready.
 CreateThread(function()
-    Wait(500)
-    InitializeLibrary()
+    Wait(1000)
+    LoadAll(true)
+    if not loaded.progression then ProgressionDefaults() end
+    GlitchAbst.IsReady = loaded.framework and true or false
+    Utils.DebugLog('GlitchAbst initialization complete (framework ' .. tostring(loaded.framework) .. ', ui ' .. tostring(loaded.ui)
+        .. ', target ' .. tostring(loaded.target) .. ', inventory ' .. tostring(loaded.inventory) .. ', notify ' .. tostring(loaded.notifications) .. ')')
+    TriggerEvent('GlitchAbst:ready', GlitchAbst.IsReady)
 end)
 
 -- Expose public exports

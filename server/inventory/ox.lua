@@ -11,11 +11,15 @@ end
 -- Existing functions first
 -- Item Management
 GlitchAbst.Inventory.AddItem = function(source, item, amount, metadata, slot, info, reason)
-    return exports.ox_inventory:AddItem(source, item, amount, metadata, slot)
+    if type(metadata) ~= 'table' and info then metadata = info end -- qb style call: info is the metadata
+    return exports.ox_inventory:AddItem(source, item, amount, type(metadata) == 'table' and metadata or nil, slot)
 end
 
 GlitchAbst.Inventory.RemoveItem = function(source, item, count, metadata, slot, ignoreTotal)
-    return exports.ox_inventory:RemoveItem(source, item, count, metadata, slot, ignoreTotal)
+    if type(metadata) == 'number' and slot == nil then -- qb style call: (source, item, amount, slot)
+        slot, metadata = metadata, nil
+    end
+    return exports.ox_inventory:RemoveItem(source, item, count, type(metadata) == 'table' and metadata or nil, slot, ignoreTotal)
 end
 
 GlitchAbst.Inventory.GetItem = function(source, item, metadata, returnsCount)
@@ -24,12 +28,15 @@ GlitchAbst.Inventory.GetItem = function(source, item, metadata, returnsCount)
 end
 
 GlitchAbst.Inventory.GetItemCount = function(source, item, metadata, strict)
-    return exports.ox_inventory:GetItemCount(source, item, metadata, strict)
+    return exports.ox_inventory:GetItemCount(source, item, metadata, strict) or 0
 end
 
 GlitchAbst.Inventory.CanCarryItem = function(source, item, count, metadata)
     return exports.ox_inventory:CanCarryItem(source, item, count, metadata)
 end
+
+-- Same name as the qb-inventory module, so callers work on both
+GlitchAbst.Inventory.CanAddItem = GlitchAbst.Inventory.CanCarryItem
 
 -- Player inventory management
 GlitchAbst.Inventory.SetPlayerInventory = function(player, data)
@@ -165,55 +172,55 @@ end
 GlitchAbst.Inventory.Confiscate = GlitchAbst.Inventory.ConfiscateInventory
 GlitchAbst.Inventory.Return = GlitchAbst.Inventory.ReturnInventory
 
--- ── RegisterUsableItem override ───────────────────────────────────────────────
--- When ox_inventory is active alongside ESX, calling ESX.RegisterUsableItem()
--- passes a cross-resource function reference through the ox_inventory → ox_lib →
--- es_extended callback chain, which FiveM cannot marshal and crashes with
--- "Execution of function reference in script host failed".
---
--- ox_inventory has its own RegisterUsableItem export that runs the callback
--- entirely within the registering resource's context (no cross-resource ref).
--- We override GlitchAbst.Framework.RegisterUsableItem here so any callers
--- using the abstraction layer get the correct implementation automatically.
--- The callback signature exposed to callers stays the same: function(source).
+-- RegisterUsableItem override
+-- ox_inventory 2.48+ no longer exports RegisterUsableItem. Items without a
+-- consume/client/server field are handed to the framework (server.UseItem in the
+-- ox bridge), so registering with the framework is what makes them usable:
+--   Qbox / QBCore -> QBCore.Functions.CreateUseableItem
+--   ESX           -> ESX.RegisterUsableItem
+-- Items that set consume (even consume = 0) never reach the framework; use an
+-- ox_inventory usingItem hook for those (GlitchAbst.Inventory.RegisterHook).
+-- The callback signature exposed to callers stays the same: function(source, item).
 GlitchAbst.Inventory.RegisterUsableItem = function(item, cb)
     if not item or not cb then return false end
 
-    -- ox_inventory removed the RegisterUsableItem export in newer versions.
-    -- Wrap in pcall so we can fall back gracefully without crashing.
-    local ok, err = pcall(function()
+    -- Older ox_inventory builds still have the export
+    local ok = pcall(function()
         exports.ox_inventory:RegisterUsableItem(item, function(event, itemData, inventory, slot, data)
             if event == 'usingItem' then
                 local source = inventory and inventory.id
                 if source then
-                    cb(source)
+                    cb(source, itemData)
                 end
             end
         end)
     end)
-
     if ok then
         GlitchAbst.Utils.DebugLog('Registered usable item via ox_inventory: ' .. tostring(item))
         return true
     end
 
-    -- Fallback: newer ox_inventory no longer exports RegisterUsableItem.
-    -- Try ESX.RegisterUsableItem directly (runs in the calling resource's
-    -- context so there is no cross-resource function reference issue).
-    GlitchAbst.Utils.DebugLog('ox_inventory:RegisterUsableItem not available (' .. tostring(err) .. '), falling back to ESX for: ' .. tostring(item))
-    if GlitchAbst.Framework and GlitchAbst.Framework.ESX then
-        local ESX = GlitchAbst.Framework.ESX
-        local esxOk, esxErr = pcall(function()
-            ESX.RegisterUsableItem(item, function(source, done)
-                cb(source)
-                if type(done) == 'function' then done() end
-            end)
+    local fw = GlitchAbst.Framework
+    if fw and fw.QBCore and fw.QBCore.Functions and fw.QBCore.Functions.CreateUseableItem then
+        local qbOk, qbErr = pcall(fw.QBCore.Functions.CreateUseableItem, item, function(source, itemData)
+            cb(source, itemData)
         end)
-        if esxOk then
-            GlitchAbst.Utils.DebugLog('Registered usable item via ESX fallback: ' .. tostring(item))
+        if qbOk then
+            GlitchAbst.Utils.DebugLog('Registered usable item via QBCore/Qbox: ' .. tostring(item))
             return true
         end
-        GlitchAbst.Utils.DebugLog('ESX fallback also failed for ' .. tostring(item) .. ': ' .. tostring(esxErr))
+        GlitchAbst.Utils.DebugLog('QBCore CreateUseableItem failed for ' .. tostring(item) .. ': ' .. tostring(qbErr))
+    end
+
+    if fw and fw.ESX and fw.ESX.RegisterUsableItem then
+        local esxOk, esxErr = pcall(fw.ESX.RegisterUsableItem, item, function(source, itemName, itemData)
+            cb(source, itemData)
+        end)
+        if esxOk then
+            GlitchAbst.Utils.DebugLog('Registered usable item via ESX: ' .. tostring(item))
+            return true
+        end
+        GlitchAbst.Utils.DebugLog('ESX RegisterUsableItem failed for ' .. tostring(item) .. ': ' .. tostring(esxErr))
     end
 
     GlitchAbst.Utils.DebugLog('WARNING: Could not register usable item (no method succeeded): ' .. tostring(item))
@@ -228,9 +235,10 @@ GlitchAbst.Inventory.GetAllItems = GlitchAbst.Inventory.GetItems
 
 -- Helper functions for common operations
 GlitchAbst.Inventory.GiveItem = function(source, target, item, count, metadata)
-    -- Simulate giving an item from one player to another
-    if source == target then return false end
-    
+    -- Move an item from one player to another
+    if source == target or not target then return false end
+    if not exports.ox_inventory:CanCarryItem(target, item, count, metadata) then return false end
+
     if exports.ox_inventory:RemoveItem(source, item, count, metadata) then
         if exports.ox_inventory:AddItem(target, item, count, metadata) then
             return true
@@ -251,13 +259,13 @@ GlitchAbst.Inventory.HasItem = function(source, items, metadata)
     else
         local hasAll = true
         local results = {}
-        
-        for _, item in pairs(items) do
+
+        for _, item in pairs(items or {}) do
             local count = GlitchAbst.Inventory.GetItemCount(source, item, metadata)
             results[item] = count
             if count <= 0 then hasAll = false end
         end
-        
+
         return hasAll, results
     end
 end
@@ -269,27 +277,28 @@ GlitchAbst.Inventory.RegisteredHooks = {}
 -- Register a hook for inventory events
 GlitchAbst.Inventory.RegisterHook = function(eventName, callback, options)
     local hookId = exports.ox_inventory:registerHook(eventName, callback, options)
-    
+    if not hookId then return nil end
+
     -- Store the hook reference for later management
     GlitchAbst.Inventory.RegisteredHooks[hookId] = {
         id = hookId,
         event = eventName,
         options = options
     }
-    
+
     return hookId
 end
 
 -- Remove hooks (single or all from this resource)
 GlitchAbst.Inventory.RemoveHook = function(id)
     exports.ox_inventory:removeHooks(id)
-    
+
     if id then
         GlitchAbst.Inventory.RegisteredHooks[id] = nil
     else
         GlitchAbst.Inventory.RegisteredHooks = {}
     end
-    
+
     return true
 end
 

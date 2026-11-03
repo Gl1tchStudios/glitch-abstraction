@@ -69,7 +69,21 @@ GlitchAbst.Inventory.Search = function(search, item, metadata)
 end
 
 GlitchAbst.Inventory.GetItemCount = function(itemName, metadata, strict)
-    return exports.ox_inventory:GetItemCount(itemName, metadata, strict)
+    return exports.ox_inventory:GetItemCount(itemName, metadata, strict) or 0
+end
+
+-- Has the player got the item(s)? A name, a list of names or { [name] = amount }
+GlitchAbst.Inventory.HasItem = function(items, amount)
+    if type(amount) ~= 'number' then amount = 1 end
+    if type(items) == 'string' then
+        return GlitchAbst.Inventory.GetItemCount(items) >= amount
+    end
+    for k, v in pairs(items or {}) do
+        local name, need = v, amount
+        if type(k) == 'string' then name, need = k, tonumber(v) or amount end
+        if GlitchAbst.Inventory.GetItemCount(name) < need then return false end
+    end
+    return true
 end
 
 GlitchAbst.Inventory.GetPlayerItems = function()

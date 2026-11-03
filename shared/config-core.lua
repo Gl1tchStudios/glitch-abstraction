@@ -1,5 +1,5 @@
 -- Core initialization file
-_G.GlitchAbst = {
+_G.GlitchAbst = _G.GlitchAbst or { -- keep the table if this file runs twice
     Framework = {},      -- Framework functions
     UI = {},             -- UI functions
     Target = {},         -- Target functions
@@ -21,7 +21,7 @@ _G.GlitchAbst = {
 -- Initialize Config if not already done
 if not _G.Config then
     _G.Config = {
-        Debug = true,
+        Debug = false,
         Framework = {
             {name = 'ESX', resourceName = 'es_extended'},
             {name = 'QBCore', resourceName = 'qb-core'}

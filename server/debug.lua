@@ -1,1 +1,1 @@
-﻿-- debug commands removed
+-- debug commands removed

@@ -1,4 +1,4 @@
--- QBCore Inventory Client Module
+-- QBCore Inventory Client Module (qb-inventory)
 
 -- Safety check for GlitchAbst
 if not GlitchAbst or not GlitchAbst.Utils then
@@ -18,21 +18,52 @@ if GetResourceState('qb-inventory') ~= 'started' then
     return false
 end
 
+local okCore, QBCore = pcall(function() return exports['qb-core']:GetCoreObject() end)
+if not okCore or not QBCore then
+    GlitchAbst.Utils.DebugLog('qb-inventory module needs qb-core')
+    return false
+end
+
 -- Initialize inventory namespace
 GlitchAbst.Inventory = GlitchAbst.Inventory or {}
 
 GlitchAbst.Utils.DebugLog('Loading qb-inventory client module')
 
--- Check if player has an item (both single item and multiple items)
+local function Items()
+    local data = QBCore.Functions.GetPlayerData() or {}
+    return data.items or {}
+end
+
+-- Check if player has an item (single name, list of names or { [name] = amount })
 GlitchAbst.Inventory.HasItem = function(items, amount)
-    if type(items) == 'string' then
-        -- For a single item
-        return exports['qb-inventory']:HasItem(items, amount or 1)
-    elseif type(items) == 'table' and not items.name then
-        -- For multiple items
-        return exports['qb-inventory']:HasItem(items, amount or 1)
+    if type(amount) ~= 'number' then amount = 1 end
+    if QBCore.Functions.HasItem then
+        return QBCore.Functions.HasItem(items, amount)
     end
-    return false
+    return exports['qb-inventory']:HasItem(items, amount)
+end
+
+-- Count of an item the player is carrying (read from the player data)
+GlitchAbst.Inventory.GetItemCount = function(itemName)
+    local count = 0
+    for _, item in pairs(Items()) do
+        if item and item.name == itemName then
+            count = count + (tonumber(item.amount or item.count) or 0)
+        end
+    end
+    return count
+end
+
+-- Player items (slot -> item)
+GlitchAbst.Inventory.GetPlayerItems = function()
+    return Items()
+end
+
+-- Item definitions (same shape as ox: Items() = all, Items(name) = one)
+GlitchAbst.Inventory.GetItems = function(itemName)
+    local shared = (QBCore.Shared and QBCore.Shared.Items) or {}
+    if itemName then return shared[itemName] end
+    return shared
 end
 
 -- Inventory state control
@@ -48,6 +79,7 @@ end
 -- Close inventory
 GlitchAbst.Inventory.Close = function()
     TriggerEvent('inventory:client:CloseInventory')
+    ExecuteCommand('closeinv')
     return true
 end
 
@@ -58,22 +90,36 @@ GlitchAbst.Inventory.UseSlot = function(slot)
     return true
 end
 
-GlitchAbst.Inventory.Search = function(search, itemName, metadata) -- metadata is used for ox inventory. Currently unsupported by qb-inventory
-    QBCore = exports['qb-core']:GetCoreObject()
-    
-    if search == 'slots' then 
-        QBCore.Functions.TriggerCallback('glitch-lib:server:GetSlotsByItem', function(result)
-            return result
-        end, source, itemName)
-    elseif search == 'count' then 
-        local count = 0
-        QBCore.Functions.TriggerCallback('glitch-lib:server:GetItemCount', function(result)
-            return result
-        end, source, itemName)
-        return count
+-- Same as ox_inventory's Search: 'count' -> number, 'slots' -> list of slot items.
+-- itemName may be a single name or a list of names (then a table keyed by name is returned).
+-- metadata is used by ox_inventory only and is ignored here.
+GlitchAbst.Inventory.Search = function(search, itemName, metadata)
+    local function slotsOf(name)
+        local list = {}
+        for _, item in pairs(Items()) do
+            if item and item.name == name then list[#list + 1] = item end
+        end
+        return list
     end
-    
-    return {} 
+
+    if type(itemName) == 'table' then
+        local result = {}
+        for _, name in ipairs(itemName) do
+            if search == 'count' then
+                result[name] = GlitchAbst.Inventory.GetItemCount(name)
+            else
+                result[name] = slotsOf(name)
+            end
+        end
+        return result
+    end
+
+    if search == 'count' then
+        return GlitchAbst.Inventory.GetItemCount(itemName)
+    elseif search == 'slots' then
+        return slotsOf(itemName)
+    end
+    return {}
 end
 
 -- Use a specific item
@@ -86,14 +132,9 @@ end
 -- Create aliases for consistent function naming
 GlitchAbst.Inventory.CloseInventory = GlitchAbst.Inventory.Close
 GlitchAbst.Inventory.IsInventoryBusy = GlitchAbst.Inventory.IsBusy
+GlitchAbst.Inventory.SetInventoryBusy = GlitchAbst.Inventory.SetBusy
 GlitchAbst.Inventory.LockInventory = function() GlitchAbst.Inventory.SetBusy(true) end
 GlitchAbst.Inventory.UnlockInventory = function() GlitchAbst.Inventory.SetBusy(false) end
-
--- Register events
-RegisterNetEvent('inventory:client:ItemBox', function(itemData, type)
-    -- Optional: You could add a callback registration system here
-    -- to handle item box notifications
-end)
 
 GlitchAbst.Utils.DebugLog('qb-inventory client module loaded')
 return true

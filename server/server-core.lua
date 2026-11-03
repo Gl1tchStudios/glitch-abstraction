@@ -15,283 +15,190 @@ if GlitchAbst == nil then
         Utils = {},
         IsReady = false
     }
-    
+
     -- Add emergency debug function
     GlitchAbst.Utils.DebugLog = function(message)
-        print('[GlitchAbst] ' .. message)
+        print('[GlitchAbst] ' .. tostring(message))
     end
 end
 
--- Utility function to check if a resource is actually available
-local function IsResourceAvailable(resourceName)
-    local state = GetResourceState(resourceName)
-    return state == 'started'
-end
+-- Run once, even if something includes this file twice
+if GlitchAbst._serverCoreLoaded then return end
+GlitchAbst._serverCoreLoaded = true
 
--- Export handling function with better error handling
-local function GetResourceExport(resourceName, exportNames)
-    if not IsResourceAvailable(resourceName) then
-        GlitchAbst.Utils.DebugLog('Resource not available: ' .. resourceName)
-        return nil
-    end
-    
-    for _, exportName in ipairs(exportNames) do
-        local success, result = pcall(function()
-            return exports[resourceName][exportName]()
-        end)
-        
-        if success and result then
-            GlitchAbst.Utils.DebugLog('Successfully loaded export ' .. resourceName .. ':' .. exportName)
-            return result
+local Utils = GlitchAbst.Utils
+local Started = Utils.IsStarted
+
+-- Config names -> module file names (the files do not all match the config names)
+local FRAMEWORK_FILES = { ESX = 'esx', QBCore = 'qbcore' }
+local INVENTORY_FILES = { ox = 'ox', qb = 'qbcore', esx = 'esx' }
+local DOORLOCK_FILES = { ox = 'ox', qb = 'qb', esx = 'esx' }
+
+local loaded = {}
+
+-- Try each running system in priority order and keep the first module that loads.
+-- choice: Config.<X>System ('auto' or a name to force)
+local function LoadFirst(kind, list, dir, files, choice, allow)
+    for _, entry in ipairs(list or {}) do
+        local wanted = (choice == nil or choice == 'auto' or choice == entry.name)
+        if wanted and Started(entry.resourceName) and (not allow or allow(entry)) then
+            local file = files[entry.name]
+            if file then
+                local ok, res = Utils.LoadModule(dir .. file .. '.lua')
+                if ok then
+                    Utils.DebugLog('Loaded ' .. kind .. ' module: ' .. entry.name)
+                    return entry.name
+                end
+                Utils.DebugLog('Could not load ' .. kind .. ' module ' .. entry.name .. ': ' .. tostring(res))
+            end
         end
     end
-    
-    GlitchAbst.Utils.DebugLog('Failed to find valid export in ' .. resourceName)
     return nil
 end
 
--- Function to detect available resources and their versions
-local function DetectResources()
-    GlitchAbst.Utils.DebugLog('Detecting available resources...')
-    
-    local available = {
-        frameworks = {},
-        inventories = {},
-        doorlocks = {},
-        targets = {},
-        progression = {}
-    }
-    
-    -- Check frameworks
-    for _, fw in ipairs(Config.Framework) do
-        if IsResourceAvailable(fw.resourceName) then
-            table.insert(available.frameworks, {
-                name = fw.name,
-                resourceName = fw.resourceName
-            })
-            GlitchAbst.Utils.DebugLog('Detected framework: ' .. fw.name)
-        end
+local function LoadFramework()
+    if loaded.framework then return true end
+
+    if not GlitchAbst.FrameworkName or GlitchAbst.FrameworkName == 'unknown' then
+        GlitchAbst.FrameworkName = Utils.DetectFramework()
     end
-    
-    -- Check inventory systems
-    for _, inv in ipairs(Config.Inventory or {}) do
-        if IsResourceAvailable(inv.resourceName) then
-            table.insert(available.inventories, {
-                name = inv.name,
-                resourceName = inv.resourceName
-            })
-            GlitchAbst.Utils.DebugLog('Detected inventory: ' .. inv.name)
-        end
+    local name = GlitchAbst.FrameworkName
+    local file = FRAMEWORK_FILES[name]
+    if not file then
+        Utils.DebugLog('No supported framework running (es_extended, qbx_core or qb-core)')
+        return false
     end
-    
-    -- Check door lock systems
-    for _, dl in ipairs(Config.DoorLock or {}) do
-        if IsResourceAvailable(dl.resourceName) then
-            local shouldInclude = true
-            
-            if dl.name == "qb" and not IsResourceAvailable('qb-core') then
-                shouldInclude = false
-            end
-            
-            if dl.name == "esx" and not IsResourceAvailable('es_extended') then
-                shouldInclude = false
-            end
-            
-            if shouldInclude then
-                table.insert(available.doorlocks, {
-                    name = dl.name,
-                    resourceName = dl.resourceName
-                })
-            end
-        end
+
+    local ok, res = Utils.LoadModule('server/framework/' .. file .. '.lua')
+    if not ok then
+        Utils.DebugLog('Failed to load framework ' .. name .. ': ' .. tostring(res))
+        return false
     end
-    
-    -- Check target systems
-    for _, target in ipairs(Config.Target or {}) do
-        if IsResourceAvailable(target.resourceName) then
-            table.insert(available.targets, {
-                name = target.name,
-                resourceName = target.resourceName
-            })
-            GlitchAbst.Utils.DebugLog('Detected target system: ' .. target.name)
-        end
-    end
-    
-    -- Check progression system
-    if IsResourceAvailable('pickle_xp') then
-        table.insert(available.progression, {
-            name = 'pickle_xp',
-            resourceName = 'pickle_xp'
-        })
-        GlitchAbst.Utils.DebugLog('Detected progression system: pickle_xp')
-    end
-    
-    return available
+
+    GlitchAbst.Framework.Type = name
+    loaded.framework = name
+    Utils.DebugLog('Successfully loaded framework: ' .. name)
+    return true
 end
 
--- Initialize the library with detected resources
-local function InitializeLibrary()
-    -- Print initialization header
-    print("^2╔════════════════════════════════════════════╗^7")
-    print("^2║             GLITCH LIB LOADING             ║^7")
-    print("^2╚════════════════════════════════════════════╝^7")
-    
-    -- Detect available resources
-    local available = DetectResources()
-    
-    -- Initialize framework
-    local frameworkLoaded = false
-    if #available.frameworks > 0 then
-        local fw = available.frameworks[1] -- Use the first detected framework
-        local frameworkName = fw.name
-        
-        local implementationName = frameworkName
-        if Config.FrameworkMapping and Config.FrameworkMapping[frameworkName] then
-            implementationName = Config.FrameworkMapping[frameworkName]
-            GlitchAbst.Utils.DebugLog('Using ' .. implementationName .. ' implementation for ' .. frameworkName)
-        end
-        
-        -- Load the appropriate framework module
-        GlitchAbst.Utils.DebugLog('Loading framework module: ' .. string.lower(implementationName))
-        
-        local status, err = pcall(function()
-            local frameworkModule = LoadResourceFile(GetCurrentResourceName(), 'server/framework/' .. string.lower(implementationName) .. '.lua')
-            if frameworkModule then
-                local fn, loadErr = load(frameworkModule)
-                if fn then
-                    fn() -- Execute the module
-                    GlitchAbst.Framework.Type = frameworkName
-                    frameworkLoaded = true
-                else
-                    error('Failed to load framework module: ' .. (loadErr or 'Unknown error'))
-                end
-            else
-                error('Framework module file not found: server/framework/' .. string.lower(implementationName) .. '.lua')
-            end
-        end)
-        
-        if not status then
-            GlitchAbst.Utils.DebugLog('Failed to load framework: ' .. err)
+local function LoadInventory()
+    if loaded.inventory or not loaded.framework then return end
+    local name = LoadFirst('inventory', Config.Inventory, 'server/inventory/', INVENTORY_FILES, Config.InventorySystem, function(entry)
+        -- es_extended counts as an inventory only on ESX itself
+        if entry.name == 'esx' then return GlitchAbst.FrameworkName == 'ESX' end
+        return true
+    end)
+    if name then
+        GlitchAbst.Inventory.Type = name
+        loaded.inventory = name
+    end
+end
+
+local function LoadDoorLock()
+    if loaded.doorlock or not loaded.framework then return end
+    local name = LoadFirst('door lock', Config.DoorLock, 'server/doorlock/', DOORLOCK_FILES, Config.DoorlockSystem, function(entry)
+        if entry.name == 'qb' then return Started('qb-core') end
+        if entry.name == 'esx' then return Started('es_extended') end
+        return true
+    end)
+    if name then
+        GlitchAbst.DoorLock.Type = name
+        loaded.doorlock = name
+    end
+end
+
+local function LoadNotifications()
+    if loaded.notifications then return end
+    if Started('ox_lib') then
+        local ok, res = Utils.LoadModule('server/notifications/ox.lua')
+        if ok then
+            loaded.notifications = 'ox'
         else
-            GlitchAbst.Utils.DebugLog('Successfully loaded framework: ' .. frameworkName)
+            Utils.DebugLog('Could not load server notifications: ' .. tostring(res))
         end
     end
-    
-    if not frameworkLoaded then
-        GlitchAbst.Utils.DebugLog('No supported framework found or failed to load!')
-    end
-    
-    -- Only initialize other systems if a framework was loaded successfully
-    if frameworkLoaded then
-        -- Initialize inventory system
-        local inventoryLoaded = false
-        if #available.inventories > 0 then
-            local inv = available.inventories[1] -- Use the first detected inventory
-            
-            GlitchAbst.Utils.DebugLog('Loading inventory module: ' .. string.lower(inv.name))
-            
-            local status, err = pcall(function()
-                local invModule = LoadResourceFile(GetCurrentResourceName(), 'server/inventory/' .. string.lower(inv.name) .. '.lua')
-                if invModule then
-                    local fn, loadErr = load(invModule)
-                    if fn then
-                        fn() -- Execute the module
-                        GlitchAbst.Inventory.Type = inv.name
-                        inventoryLoaded = true
-                    else
-                        error('Failed to load inventory module: ' .. (loadErr or 'Unknown error'))
-                    end
-                else
-                    error('Inventory module file not found: server/inventory/' .. string.lower(inv.name) .. '.lua')
-                end
-            end)
-            
-            if not status then
-                GlitchAbst.Utils.DebugLog('Failed to load inventory system: ' .. err)
-            else
-                GlitchAbst.Utils.DebugLog('Successfully loaded inventory: ' .. inv.name)
-            end
-        end
-        
-        -- Load progression system
-        local progressionLoaded = false
-        if #available.progression > 0 then
-            local prog = available.progression[1]
-            
-            GlitchAbst.Utils.DebugLog('Loading progression module: ' .. string.lower(prog.name))
-            
-            local status, err = pcall(function()
-                local progressionModule = LoadResourceFile(GetCurrentResourceName(), 'server/progression/' .. string.lower(prog.name) .. '.lua')
-                if progressionModule then
-                    local fn, loadErr = load(progressionModule)
-                    if fn then
-                        fn() -- Execute the module
-                        GlitchAbst.Progression.Type = prog.name
-                        progressionLoaded = true
-                    else
-                        error('Failed to load progression module: ' .. (loadErr or 'Unknown error'))
-                    end
-                else
-                    error('Progression module file not found: server/progression/' .. string.lower(prog.name) .. '.lua')
-                end
-            end)
-            
-            if not status then
-                GlitchAbst.Utils.DebugLog('Failed to load progression system: ' .. err)
-            else
-                GlitchAbst.Utils.DebugLog('Successfully loaded progression system: ' .. prog.name)
-            end
-        end
-    
-        -- Load door lock system
-        local doorLockLoaded = false
-        if #available.doorlocks > 0 then
-            local dl = available.doorlocks[1] -- Use the first detected door lock system
-            
-            GlitchAbst.Utils.DebugLog('Loading door lock module: ' .. string.lower(dl.name))
-            
-            local status, err = pcall(function()
-                local doorLockModule = LoadResourceFile(GetCurrentResourceName(), 'server/doorlock/' .. string.lower(dl.name) .. '.lua')
-                if doorLockModule then
-                    local fn, loadErr = load(doorLockModule)
-                    if fn then
-                        fn() -- Execute the module
-                        GlitchAbst.DoorLock.Type = dl.name
-                        doorLockLoaded = true
-                    else
-                        error('Failed to load door lock module: ' .. (loadErr or 'Unknown error'))
-                    end
-                else
-                    error('Door lock module file not found: server/doorlock/' .. string.lower(dl.name) .. '.lua')
-                end
-            end)
-            
-            if not status then
-                GlitchAbst.Utils.DebugLog('Failed to load door lock system: ' .. err)
-            else
-                GlitchAbst.Utils.DebugLog('Successfully loaded door lock system: ' .. dl.name)
-            end
-        end
-    end
-    
-    GlitchAbst.IsReady = frameworkLoaded
-    
-    print("^2╔════════════════════════════════════════════╗^7")
-    print("^2║           GLITCH LIB LOADED: " .. (GlitchAbst.IsReady and "^2YES" or "^1NO ") .. "           ║^7")
-    print("^2╚════════════════════════════════════════════╝^7")
-    
-    TriggerEvent('GlitchAbst:ready', GlitchAbst.IsReady)
 end
 
--- Wait a moment for other resources to start
+-- Which XP module to use: Config.xpSystem 'glitch_xpSystem', 'pickle_xp' or 'auto'.
+-- The XP resource usually starts after this library, so 'auto' only needs it to exist.
+local function XPChoice()
+    local choice = Config.xpSystem or 'auto'
+    if choice ~= 'auto' then return choice end
+    if GetResourceState('glitch-xpSystem') ~= 'missing' or GetResourceState('glitch_xpSystem') ~= 'missing' then
+        return 'glitch_xpSystem'
+    end
+    if GetResourceState('pickle_xp') ~= 'missing' then return 'pickle_xp' end
+    return nil
+end
+local XP_FILES = { glitch_xpSystem = 'glitch_xpsystem', pickle_xp = 'pickle_xp' }
+
+local function LoadProgression()
+    if loaded.progression then return end
+    local choice = XPChoice()
+    local xpFile = choice and XP_FILES[choice]
+    if not xpFile then return end
+    -- The XP resource may be named glitch-xpSystem or glitch_xpSystem; the module
+    -- looks the resource up on every call, so it can load before the XP resource starts.
+    local ok, res = Utils.LoadModule('server/progression/' .. xpFile .. '.lua')
+    if ok then
+        GlitchAbst.Progression.Type = choice
+        loaded.progression = choice
+    else
+        Utils.DebugLog('Could not load progression module: ' .. tostring(res))
+    end
+end
+
+local function LoadAll()
+    LoadFramework()
+    LoadInventory()
+    LoadDoorLock()
+    LoadNotifications()
+    LoadProgression()
+end
+
+-- No XP system: safe defaults so callers never index nil
+local function ProgressionDefaults()
+    local P = GlitchAbst.Progression
+    P.Type = P.Type or 'none'
+    P.IsAvailable = P.IsAvailable or function() return false end
+    P.GetXPData = P.GetXPData or function() return 0, 0 end
+    P.AddXP = P.AddXP or function() return false end
+    P.RemoveXP = P.RemoveXP or function() return false end
+    P.SetXP = P.SetXP or function() return false end
+    P.GetLevel = P.GetLevel or function() return 0 end
+    P.InitializePlayerXP = P.InitializePlayerXP or function() return false end
+    P.RegisterXPCategory = P.RegisterXPCategory or function() return false end
+end
+
+-- First pass straight away, so resources that grab the library while they start
+-- already get working functions.
+LoadAll()
+
+-- Second pass once the rest of server.cfg has started (frameworks or inventories
+-- that started after us), then announce that the library is ready.
 CreateThread(function()
-    Wait(1000) -- Allow time for other resources to initialize
-    InitializeLibrary()
+    Wait(1000)
+
+    print('^2+--------------------------------------------+^7')
+    print('^2|             GLITCH LIB LOADING             |^7')
+    print('^2+--------------------------------------------+^7')
+
+    LoadAll()
+
+    if not loaded.progression then ProgressionDefaults() end
+    GlitchAbst.IsReady = loaded.framework and true or false
+
+    print('^2+--------------------------------------------+^7')
+    print('^2|           GLITCH LIB LOADED: ' .. (GlitchAbst.IsReady and '^2YES' or '^1NO ') .. '^2           |^7')
+    print('^2+--------------------------------------------+^7')
+    if not GlitchAbst.IsReady then
+        print('^1[glitch-abstraction] No supported framework is running (es_extended, qbx_core or qb-core).^7')
+    end
+
+    TriggerEvent('GlitchAbst:ready', GlitchAbst.IsReady)
 end)
 
 -- Export the library
 exports('getAbstraction', function()
     return GlitchAbst
 end)
-
-

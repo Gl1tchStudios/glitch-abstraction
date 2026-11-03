@@ -41,6 +41,7 @@ local nextQBNotificationId = 1
 
 -- Basic notification
 GlitchAbst.Notifications.Show = function(params)
+    params = type(params) == 'table' and params or { description = tostring(params) }
     local qbType = 'primary'
     if params.type == 'error' then qbType = 'error'
     elseif params.type == 'success' then qbType = 'success'

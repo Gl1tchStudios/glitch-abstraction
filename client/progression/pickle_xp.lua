@@ -1,59 +1,51 @@
--- Safety check for GlitchAbst
+-- pickle_xp Client
 if not GlitchAbst or not GlitchAbst.Utils then
     print("^1[ERROR] GlitchAbst not initialized before loading pickle_xp progression module^7")
     return false
 end
 
--- Initialize progression namespace
 GlitchAbst.Progression = GlitchAbst.Progression or {}
 
--- Skip if XP system doesn't match
-if Config and Config.xpSystem and Config.xpSystem ~= 'pickle_xp' then
-    GlitchAbst.Utils.DebugLog('Skipping pickle_xp module (using ' .. Config.xpSystem .. ' instead)')
-    return false
+-- Looked up on every call: the XP resource may start after this library
+local function Call(name, ...)
+    if GetResourceState('pickle_xp') ~= 'started' then return false end
+    local e = exports.pickle_xp
+    return pcall(e[name], e, ...)
 end
 
--- Check if resource is actually available
-if GetResourceState('pickle_xp') ~= 'started' then
-    GlitchAbst.Utils.DebugLog('pickle_xp resource is not available')
-    return false
-end
-
-GlitchAbst.Utils.DebugLog('pickle_xp progression module loaded')
-
--- pickle_xp Client
 GlitchAbst.Utils.DebugLog('pickle_xp client module loaded')
 
--- Get XP data for all categories
+GlitchAbst.Progression.IsAvailable = function()
+    return GetResourceState('pickle_xp') == 'started'
+end
+
 GlitchAbst.Progression.GetXPData = function()
-    return exports.pickle_xp:GetXPData()
+    local ok, data = Call('GetXPData')
+    return ok and data or {}
 end
 
--- Get current XP
 GlitchAbst.Progression.GetXP = function(name)
-    if not name then
-        return exports.pickle_xp:GetXP()
-    end
-    return exports.pickle_xp:GetXP(name)
+    local ok, xp
+    if name then ok, xp = Call('GetXP', name) else ok, xp = Call('GetXP') end
+    return ok and xp or 0
 end
 
--- Get current level
 GlitchAbst.Progression.GetLevel = function(name)
-    if name then
-        return exports.pickle_xp:GetLevel(name)
-    else
-        return exports.pickle_xp:GetLevel()
-    end
+    local ok, level
+    if name then ok, level = Call('GetLevel', name) else ok, level = Call('GetLevel') end
+    return ok and level or 0
 end
 
--- Get required XP for a specific level in a category (shared function)
 GlitchAbst.Progression.GetLevelXP = function(name, level)
     if not name or not level then return 0 end
-    return exports.pickle_xp:GetLevelXP(name, level)
+    local ok, xp = Call('GetLevelXP', name, level)
+    return ok and xp or 0
 end
 
--- Get current level of a category (shared function)
 GlitchAbst.Progression.GetCategoryLevel = function(name)
     if not name then return 0 end
-    return exports.pickle_xp:GetCategoryLevel(name)
+    local ok, level = Call('GetCategoryLevel', name)
+    return ok and level or 0
 end
+
+return true

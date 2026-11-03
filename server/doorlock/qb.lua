@@ -10,97 +10,76 @@ end
 -- Early exit if qb-doorlock isn't available
 if not IsResourceAvailable('qb-doorlock') then
     GlitchAbst.Utils.DebugLog('WARNING: qb-doorlock resource is not available')
-    
-    -- Set up placeholder functions
-    GlitchAbst.DoorLock.GetDoorState = function(door) return nil end
-    GlitchAbst.DoorLock.SetDoorState = function(door, state, source) return false end
-    GlitchAbst.DoorLock.PlayerHasAccess = function(source, door) return false end
-    GlitchAbst.DoorLock.GetAllDoors = function() return {} end
-    GlitchAbst.DoorLock.AddDoor = function(door) return false end
-    GlitchAbst.DoorLock.RemoveDoor = function(door) return false end
-    
-    return  -- Exit early
+    return false
 end
 
 -- Try to initialize QBCore
-local QBCore = nil
 local function initQBCore()
+    if GlitchAbst.Framework.QBCore then return GlitchAbst.Framework.QBCore end
     if not IsResourceAvailable('qb-core') then
         return false
     end
-    
+
     local success, result = pcall(function()
         return exports['qb-core']:GetCoreObject()
     end)
-    
-    if not success then
-        success, result = pcall(function()
-            return exports['qb-core']:GetSharedObject()
-        end)
-    end
-    
-    if not success then
-        success, result = pcall(function()
-            return exports['qb-core']:getCore()
-        end)
-    end
-    
+
     if not success or result == nil then
         GlitchAbst.Utils.DebugLog('ERROR: Failed to initialize QBCore for doorlock - export not found')
         return false
     end
-    
+
     return result
 end
 
-QBCore = initQBCore()
+local QBCore = initQBCore()
 
 -- Cache for door data
 local doorCache = {}
 
 -- Try to get door data with multiple possible export names
 local function getDoorData()
-    -- Try different export names that qb-doorlock might use
     local exportNames = {
-        'getDoorStateTable', 
+        'getDoorStateTable',
         'GetDoorStateTable',
         'getDoors',
         'GetDoors',
         'getAllDoors',
         'getDoorList'
     }
-    
+
     for _, exportName in ipairs(exportNames) do
         local success, result = pcall(function()
-            return exports['qb-doorlock'][exportName]()
+            local e = exports['qb-doorlock']
+            return e[exportName](e)
         end)
-        
-        if success and result then
+
+        if success and type(result) == 'table' then
             GlitchAbst.Utils.DebugLog('Successfully got door data using export: ' .. exportName)
             return result
         end
     end
-    
+
     -- If exports fail, try to access door data through events
     local doorData = nil
-    RegisterNetEvent('qb-doorlock:server:getDoors')
-    AddEventHandler('qb-doorlock:server:getDoors', function(doors)
+    local handler = AddEventHandler('qb-doorlock:server:getDoors', function(doors)
         doorData = doors
     end)
-    
+
     TriggerEvent('qb-doorlock:server:requestDoors')
-    
+
     -- Wait briefly for event response
-    local startTime = os.time()
-    while doorData == nil and os.time() - startTime < 3 do
+    local deadline = GetGameTimer() + 3000
+    while doorData == nil and GetGameTimer() < deadline do
         Wait(100)
     end
-    
-    if doorData then
+    RemoveEventHandler(handler)
+
+    if type(doorData) == 'table' then
         GlitchAbst.Utils.DebugLog('Successfully got door data using event')
         return doorData
     end
-    
+
     GlitchAbst.Utils.DebugLog('WARNING: Could not get door data from qb-doorlock')
     return {}
 end
@@ -108,42 +87,38 @@ end
 -- Initialize doorCache on resource start
 CreateThread(function()
     Wait(1000) -- Wait for doors to be loaded
-    doorCache = getDoorData()
+    doorCache = getDoorData() or {}
 end)
+
+local function FindId(door)
+    if type(door) == 'string' then
+        for id, doorData in pairs(doorCache) do
+            if doorData.doorLabel == door or doorData.doorId == door or id == door then
+                return id
+            end
+        end
+        return nil
+    end
+    return door
+end
 
 -- Get door state
 GlitchAbst.DoorLock.GetDoorState = function(door)
-    if type(door) == 'number' then
-        if doorCache[door] then
-            return doorCache[door].locked
-        end
-    elseif type(door) == 'string' then
-        -- Try to find door by name/id string
-        for id, doorData in pairs(doorCache) do
-            if doorData.doorLabel == door or doorData.doorId == door then
-                return doorData.locked
-            end
-        end
+    local id = FindId(door)
+    if id ~= nil and doorCache[id] then
+        return doorCache[id].locked
     end
     return nil
 end
 
 -- Set door state
 GlitchAbst.DoorLock.SetDoorState = function(door, state, playerId)
-    local doorId = door
-    if type(door) == 'string' then
-        -- Try to find door by name/id string
-        for id, doorData in pairs(doorCache) do
-            if doorData.doorLabel == door or doorData.doorId == door then
-                doorId = id
-                break
-            end
-        end
-    end
-    
-    if doorId and doorCache[doorId] then
-        local player = playerId and playerId or 0
-        TriggerEvent('qb-doorlock:server:updateState', doorId, state, player, false)
+    local doorId = FindId(door)
+
+    if doorId ~= nil and doorCache[doorId] then
+        local locked = (state == true or state == 1 or state == 'locked')
+        TriggerEvent('qb-doorlock:server:updateState', doorId, locked, playerId or 0, false)
+        doorCache[doorId].locked = locked
         return true
     end
     return false
@@ -151,65 +126,55 @@ end
 
 -- Check if player has access to a door
 GlitchAbst.DoorLock.PlayerHasAccess = function(source, door)
-    local doorId = door
-    if type(door) == 'string' then
-        -- Try to find door by name/id string
-        for id, doorData in pairs(doorCache) do
-            if doorData.doorLabel == door or doorData.doorId == door then
-                doorId = id
-                break
-            end
-        end
-    end
-    
-    if doorId and doorCache[doorId] then
+    local doorId = FindId(door)
+
+    if doorId ~= nil and doorCache[doorId] then
         local Player = QBCore and QBCore.Functions.GetPlayer(source)
         if not Player then return false end
-        
+
+        local pd = Player.PlayerData
         local doorData = doorCache[doorId]
-        
-        -- Check for authorized jobs
-        if doorData.authorizedJobs then
-            if doorData.authorizedJobs[Player.PlayerData.job.name] then
-                if not doorData.authorizedJobs[Player.PlayerData.job.name].min then 
-                    return true
-                else
-                    if Player.PlayerData.job.grade.level >= doorData.authorizedJobs[Player.PlayerData.job.name].min then
-                        return true
-                    end
-                end
+
+        local function Level(grade)
+            if type(grade) == 'table' then return grade.level or 0 end
+            return tonumber(grade) or 0
+        end
+
+        -- Check for authorized jobs (value is either true or a minimum grade / { min = n })
+        if doorData.authorizedJobs and pd.job and doorData.authorizedJobs[pd.job.name] ~= nil then
+            local rule = doorData.authorizedJobs[pd.job.name]
+            local need = type(rule) == 'table' and (rule.min or 0) or tonumber(rule) or 0
+            if Level(pd.job.grade) >= need then
+                return true
             end
         end
-        
+
         -- Check for authorized gang
-        if doorData.authorizedGangs and Player.PlayerData.gang then
-            if doorData.authorizedGangs[Player.PlayerData.gang.name] then
-                if not doorData.authorizedGangs[Player.PlayerData.gang.name].min then
-                    return true
-                else
-                    if Player.PlayerData.gang.grade.level >= doorData.authorizedGangs[Player.PlayerData.gang.name].min then
-                        return true
-                    end
-                end
+        if doorData.authorizedGangs and pd.gang and doorData.authorizedGangs[pd.gang.name] ~= nil then
+            local rule = doorData.authorizedGangs[pd.gang.name]
+            local need = type(rule) == 'table' and (rule.min or 0) or tonumber(rule) or 0
+            if Level(pd.gang.grade) >= need then
+                return true
             end
         end
-        
+
         -- Check for authorized citizenid
-        if doorData.authorizedCitizenIDs and doorData.authorizedCitizenIDs[Player.PlayerData.citizenid] then
+        if doorData.authorizedCitizenIDs and doorData.authorizedCitizenIDs[pd.citizenid] then
             return true
         end
-        
+
         -- Check for items
         if doorData.items then
             for _, item in pairs(doorData.items) do
-                local hasItem = Player.Functions.GetItemByName(item)
-                if hasItem and hasItem.amount > 0 then
+                local name = type(item) == 'table' and item.name or item
+                local hasItem = Player.Functions.GetItemByName(name)
+                if hasItem and (hasItem.amount or hasItem.count or 0) > 0 then
                     return true
                 end
             end
         end
     end
-    
+
     return false
 end
 
@@ -229,3 +194,5 @@ GlitchAbst.DoorLock.RemoveDoor = function(door)
     GlitchAbst.Utils.DebugLog('Removing doors in qb-doorlock requires manual config update')
     return false
 end
+
+return true

@@ -73,6 +73,7 @@ GlitchAbst.Scaleform.CallFunction = function(handleOrName, retval, funcName, ...
         end
     end
     
+    if not handle or not funcName then return false end
     BeginScaleformMovieMethod(handle, funcName)
     
     local args = {...}
@@ -276,6 +277,8 @@ end
 -- _xp: { xpGained, xpBeforeGain, minLevelXP, maxLevelXP, currentRank, nextRank, rankTextSmall, rankTextBig }
 -- showXP: boolean
 GlitchAbst.Scaleform.ShowHeistFinale = function(_initialText, _table, _money, _xp, showXP)
+    _initialText = type(_initialText) == 'table' and _initialText or {}
+    _money = type(_money) == 'table' and _money or {}
     local handle = GlitchAbst.Scaleform.Load("HEIST_AWARDS")
 
     if not handle then
@@ -290,9 +293,9 @@ GlitchAbst.Scaleform.ShowHeistFinale = function(_initialText, _table, _money, _x
     end
 
     BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_TOP")
-        ScaleformMovieMethodAddParamTextureNameString(_initialText.missionTextLabel)
-        ScaleformMovieMethodAddParamTextureNameString(_initialText.passFailTextLabel)
-        ScaleformMovieMethodAddParamTextureNameString(_initialText.messageLabel)
+        ScaleformMovieMethodAddParamTextureNameString(_initialText.missionTextLabel or '')
+        ScaleformMovieMethodAddParamTextureNameString(_initialText.passFailTextLabel or '')
+        ScaleformMovieMethodAddParamTextureNameString(_initialText.messageLabel or '')
     EndScaleformMovieMethod()
 
     BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_BOTTOM_BLOCK")
@@ -308,17 +311,17 @@ GlitchAbst.Scaleform.ShowHeistFinale = function(_initialText, _table, _money, _x
     end
 
     BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_PASS_BLOCK")
-        ScaleformMovieMethodAddParamTextureNameString(_money.topText)
-        ScaleformMovieMethodAddParamTextureNameString(_money.bottomText)
+        ScaleformMovieMethodAddParamTextureNameString(_money.topText or '')
+        ScaleformMovieMethodAddParamTextureNameString(_money.bottomText or '')
         ScaleformMovieMethodAddParamFloat(tonumber(_money.startMoney) or 0.0)
         ScaleformMovieMethodAddParamFloat(tonumber(_money.finishMoney) or 0.0)
-        ScaleformMovieMethodAddParamTextureNameString(_money.rightHandStat)
+        ScaleformMovieMethodAddParamTextureNameString(_money.rightHandStat or '')
         ScaleformMovieMethodAddParamInt(_money.rightHandStatIcon or 0)
     EndScaleformMovieMethod()
 
     if showXP and _xp then
         BeginScaleformMovieMethod(handle, "SHOW_HEIST_CELEBS_XP_BLOCK")
-            ScaleformMovieMethodAddParamInt(_xp.xpGained)
+            ScaleformMovieMethodAddParamInt(math.floor(tonumber(_xp.xpGained) or 0))
             ScaleformMovieMethodAddParamFloat(_xp.xpBeforeGain or 0.0)
             ScaleformMovieMethodAddParamFloat(_xp.minLevelXP or 0.0)
             ScaleformMovieMethodAddParamFloat(_xp.maxLevelXP or 1.0)

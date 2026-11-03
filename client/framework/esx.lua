@@ -11,7 +11,7 @@ if GlitchAbst.FrameworkName and GlitchAbst.FrameworkName ~= 'ESX' then
 end
 
 -- Check if resource is actually available
-if GetResourceState('es_extended') ~= 'started' then
+if not GlitchAbst.Utils.IsStarted('es_extended') then
     GlitchAbst.Utils.DebugLog('es_extended resource is not available')
     return false
 end
@@ -26,8 +26,12 @@ local success, result = pcall(function()
 end)
 
 if not success or not result then
-    GlitchAbst.Utils.DebugLog('WARNING: Failed to get ESX object, skipping ESX integration')
-    return false
+    -- Legacy ESX: the event handler runs straight away
+    TriggerEvent('esx:getSharedObject', function(obj) result = obj end)
+    if not result then
+        GlitchAbst.Utils.DebugLog('WARNING: Failed to get ESX object, skipping ESX integration')
+        return false
+    end
 end
 
 ESX = result
@@ -35,14 +39,31 @@ GlitchAbst.Framework.ESX = ESX
 GlitchAbst.Framework.Type = 'ESX'
 GlitchAbst.Utils.DebugLog('ESX framework module loaded')
 
--- Player data
+-- Player data ({} before a character is loaded)
 GlitchAbst.Framework.GetPlayerData = function()
-    return ESX.GetPlayerData()
+    return ESX.GetPlayerData() or {}
 end
 
 -- Callbacks
 GlitchAbst.Framework.TriggerCallback = function(name, cb, ...)
     ESX.TriggerServerCallback(name, cb, ...)
+end
+
+-- Notifications
+GlitchAbst.Framework.Notify = function(message, type, duration)
+    local notifyType = GlitchAbst.Notifications and GlitchAbst.Notifications.Type
+    -- 'framework' means the notification module is routed back here: do not loop
+    if notifyType and notifyType ~= 'framework' and GlitchAbst.Notifications.Show then
+        GlitchAbst.Notifications.Show({
+            description = message,
+            type = type or 'info',
+            duration = duration or 5000
+        })
+    elseif ESX.ShowNotification then
+        ESX.ShowNotification(message, type, duration)
+    else
+        TriggerEvent('esx:showNotification', message, type, duration)
+    end
 end
 
 -- Help notifications
@@ -51,66 +72,67 @@ GlitchAbst.Framework.ShowHelpNotification = function(message, thisFrame)
     ESX.ShowHelpNotification(message, thisFrame)
 end
 
--- Player functions
-GlitchAbst.Framework.SpawnPlayer = function(coords, callback)
-    local isDead = ESX.IsPlayerDead()
-    
-    if isDead then
-        -- Player is dead, handle respawn logic
-        TriggerEvent('esx_ambulancejob:revive')
-        SetTimeout(1000, function()
-            DoScreenFadeOut(500)
-            Wait(1000)
-            SetEntityCoords(PlayerPedId(), coords.x, coords.y, coords.z, false, false, false, false)
-            SetEntityHeading(PlayerPedId(), coords.w or 0.0)
-            Wait(500)
-            DoScreenFadeIn(500)
-            if callback then callback() end
-        end)
-    else
-        -- Player is alive
-        DoScreenFadeOut(500)
-        Wait(1000)
-        SetEntityCoords(PlayerPedId(), coords.x, coords.y, coords.z, false, false, false, false)
-        SetEntityHeading(PlayerPedId(), coords.w or 0.0)
-        Wait(500)
-        DoScreenFadeIn(500)
-        if callback then callback() end
+local function IsDead()
+    if ESX.PlayerData and ESX.PlayerData.dead then return true end
+    if ESX.IsPlayerDead then
+        local ok, dead = pcall(ESX.IsPlayerDead)
+        if ok and dead then return true end
     end
+    return IsEntityDead(PlayerPedId())
 end
 
--- UI functions
-GlitchAbst.Framework.DrawText = function(x, y, text)
+local function Teleport(coords, callback)
+    DoScreenFadeOut(500)
+    Wait(1000)
+    SetEntityCoords(PlayerPedId(), coords.x, coords.y, coords.z, false, false, false, false)
+    SetEntityHeading(PlayerPedId(), coords.w or 0.0)
+    Wait(500)
+    DoScreenFadeIn(500)
+    if callback then callback() end
+end
+
+-- Player functions (call from a thread: this waits for the screen fades)
+GlitchAbst.Framework.SpawnPlayer = function(coords, callback)
+    if not coords then return false end
+    if IsDead() then
+        -- Player is dead, revive first
+        TriggerEvent('esx_ambulancejob:revive')
+        SetTimeout(1000, function()
+            Teleport(coords, callback)
+        end)
+    else
+        Teleport(coords, callback)
+    end
+    return true
+end
+
+local function DrawTextAt(x, y, text)
+    text = tostring(text or '')
     SetTextScale(0.35, 0.35)
     SetTextFont(4)
-    SetTextProportional(1)
+    SetTextProportional(true)
     SetTextColour(255, 255, 255, 215)
-    SetTextEntry("STRING")
+    BeginTextCommandDisplayText("STRING")
     SetTextCentre(true)
-    AddTextComponentString(text)
-    DrawText(x, y)
-    
-    -- Optional background
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayText(x, y)
+
+    -- Background
     local factor = (string.len(text)) / 370
     DrawRect(x, y + 0.0125, 0.015 + factor, 0.03, 0, 0, 0, 68)
 end
 
--- 3D text
-GlitchAbst.Framework.Draw3DText = function(coords, text)
-    local onScreen, _x, _y = World3dToScreen2d(coords.x, coords.y, coords.z)
-    local pX, pY, pZ = table.unpack(GetGameplayCamCoords())
+-- UI functions
+GlitchAbst.Framework.DrawText = function(x, y, text)
+    DrawTextAt(x, y, text)
+end
 
-    SetTextScale(0.35, 0.35)
-    SetTextFont(4)
-    SetTextProportional(1)
-    SetTextColour(255, 255, 255, 215)
-    SetTextEntry("STRING")
-    SetTextCentre(1)
-    AddTextComponentString(text)
-    DrawText(_x, _y)
-    
-    local factor = (string.len(text)) / 370
-    DrawRect(_x, _y + 0.0125, 0.015 + factor, 0.03, 0, 0, 0, 68)
+-- 3D text (skipped when the point is off screen)
+GlitchAbst.Framework.Draw3DText = function(coords, text)
+    if not coords then return end
+    local onScreen, _x, _y = World3dToScreen2d(coords.x, coords.y, coords.z)
+    if not onScreen then return end
+    DrawTextAt(_x, _y, text)
 end
 
 -- Get closest player
@@ -121,14 +143,14 @@ end
 
 -- Vehicle functions
 GlitchAbst.Framework.GetVehicleProperties = function(vehicle)
-    if DoesEntityExist(vehicle) then
+    if vehicle and DoesEntityExist(vehicle) then
         return ESX.Game.GetVehicleProperties(vehicle)
     end
     return nil
 end
 
 GlitchAbst.Framework.SetVehicleProperties = function(vehicle, props)
-    if DoesEntityExist(vehicle) and props then
+    if vehicle and DoesEntityExist(vehicle) and props then
         ESX.Game.SetVehicleProperties(vehicle, props)
         return true
     end

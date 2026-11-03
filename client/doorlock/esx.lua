@@ -21,65 +21,72 @@ GlitchAbst.DoorLock = GlitchAbst.DoorLock or {}
 
 GlitchAbst.Utils.DebugLog('ESX doorlock module loaded')
 
+local function GetESX()
+    return GlitchAbst.Framework.ESX or exports['es_extended']:getSharedObject()
+end
+
 -- Local cache to store door information
 local doorCache = {}
 
--- Initialize the door cache
+-- Initialize the door cache (esx_doorlock versions that answer this event fill it)
 CreateThread(function()
     Wait(1000) -- Wait for doors to be loaded
     TriggerEvent('esx_doorlock:getDoors', function(doors)
-        doorCache = doors
+        if type(doors) == 'table' then doorCache = doors end
     end)
 end)
 
 -- Listen for door state updates
-RegisterNetEvent('esx_doorlock:setState')
 AddEventHandler('esx_doorlock:setState', function(doorIndex, state)
-    if doorCache[doorIndex] then
+    if doorIndex ~= nil and doorCache[doorIndex] then
         doorCache[doorIndex].locked = state
     end
 end)
 
--- Check if a door is locked
-GlitchAbst.DoorLock.IsDoorLocked = function(door)
-    if type(door) == 'number' and doorCache[door] then
-        return doorCache[door].locked
-    elseif type(door) == 'string' then
-        -- Try to find door by name
+local function FindId(door)
+    if type(door) == 'string' then
         for id, doorData in pairs(doorCache) do
-            if doorData.textCoords and doorData.label == door then
-                return doorData.locked
+            if doorData.label == door then
+                return id
             end
         end
+        return nil
+    end
+    return door
+end
+
+-- Check if a door is locked
+GlitchAbst.DoorLock.IsDoorLocked = function(door)
+    local id = FindId(door)
+    if id ~= nil and doorCache[id] then
+        return doorCache[id].locked
     end
     return nil
 end
 
--- Lock a door
+-- Lock / unlock a door
 GlitchAbst.DoorLock.SetDoorLocked = function(door, state)
-    local doorId = door
-    if type(door) == 'string' then
-        -- Try to find door by name
-        for id, doorData in pairs(doorCache) do
-            if doorData.textCoords and doorData.label == door then
-                doorId = id
-                break
-            end
-        end
-    end
-    
-    if doorId and doorCache[doorId] then
-        TriggerServerEvent('esx_doorlock:updateState', doorId, state, false, false)
+    local doorId = FindId(door)
+    if doorId ~= nil and doorCache[doorId] then
+        TriggerServerEvent('esx_doorlock:updateState', doorId, state and true or false, false, false)
         return true
     end
     return false
+end
+
+GlitchAbst.DoorLock.LockDoor = function(door) return GlitchAbst.DoorLock.SetDoorLocked(door, true) end
+GlitchAbst.DoorLock.UnlockDoor = function(door) return GlitchAbst.DoorLock.SetDoorLocked(door, false) end
+GlitchAbst.DoorLock.GetDoorState = function(door)
+    local locked = GlitchAbst.DoorLock.IsDoorLocked(door)
+    if locked == nil then return nil end
+    return locked and 'locked' or 'unlocked'
 end
 
 -- Get nearby doors
 GlitchAbst.DoorLock.GetNearbyDoors = function()
     local playerPos = GetEntityCoords(PlayerPedId())
     local nearbyDoors = {}
-    
+
     for doorId, door in pairs(doorCache) do
         if door.textCoords then
             local distance = #(playerPos - vector3(door.textCoords.x, door.textCoords.y, door.textCoords.z))
@@ -89,7 +96,7 @@ GlitchAbst.DoorLock.GetNearbyDoors = function()
             end
         end
     end
-    
+
     return nearbyDoors
 end
 
@@ -105,22 +112,13 @@ end
 
 -- Check if player has access to a door
 GlitchAbst.DoorLock.HasAccess = function(door)
-    local doorId = door
-    if type(door) == 'string' then
-        -- Try to find door by name
-        for id, doorData in pairs(doorCache) do
-            if doorData.textCoords and doorData.label == door then
-                doorId = id
-                break
-            end
-        end
-    end
-    
-    if doorId and doorCache[doorId] then
-        local ESX = exports['es_extended']:getSharedObject()
-        local playerData = ESX.GetPlayerData()
+    local doorId = FindId(door)
+
+    if doorId ~= nil and doorCache[doorId] then
+        local playerData = GetESX().GetPlayerData() or {}
+        if not playerData.job then return false end
         local doorData = doorCache[doorId]
-        
+
         -- Check for allowed jobs
         if doorData.authorizedJobs then
             for _, job in pairs(doorData.authorizedJobs) do
@@ -129,17 +127,20 @@ GlitchAbst.DoorLock.HasAccess = function(door)
                 end
             end
         end
-        
+
         -- Check for items
         if doorData.items then
             for _, item in pairs(doorData.items) do
-                local hasItem = ESX.HasItem(item)
-                if hasItem then
-                    return true
+                for _, invItem in pairs(playerData.inventory or {}) do
+                    if invItem.name == item and (invItem.count or 0) > 0 then
+                        return true
+                    end
                 end
             end
         end
     end
-    
+
     return false
 end
+
+return true

@@ -1,4 +1,4 @@
--- QBCore Inventory Server Module
+-- QBCore Inventory Server Module (qb-inventory)
 
 GlitchAbst.Utils.DebugLog('Loading qb-inventory server module')
 
@@ -8,8 +8,18 @@ if GetResourceState('qb-inventory') ~= 'started' then
     return false
 end
 
+local okCore, QBCore = pcall(function() return exports['qb-core']:GetCoreObject() end)
+if not okCore or not QBCore then
+    GlitchAbst.Utils.DebugLog('qb-inventory module needs qb-core')
+    return false
+end
+
 -- Ensure inventory namespace exists
 GlitchAbst.Inventory = GlitchAbst.Inventory or {}
+
+local function SharedItems()
+    return (QBCore.Shared and QBCore.Shared.Items) or {}
+end
 
 -- Inventory Management
 GlitchAbst.Inventory.LoadInventory = function(source, citizenid)
@@ -48,15 +58,38 @@ end
 
 -- Item functions
 GlitchAbst.Inventory.CanAddItem = function(source, item, amount)
-    return exports['qb-inventory']:CanAddItem(source, item, amount)
+    return exports['qb-inventory']:CanAddItem(source, item, tonumber(amount) or 1)
 end
 
+-- Same name as the ox_inventory module, so callers work on both
+GlitchAbst.Inventory.CanCarryItem = function(source, item, count)
+    return GlitchAbst.Inventory.CanAddItem(source, item, count)
+end
+
+GlitchAbst.Inventory.CanCarryWeight = function(source, weight)
+    local free = exports['qb-inventory']:GetFreeWeight(source)
+    return (tonumber(free) or 0) >= (tonumber(weight) or 0)
+end
+
+-- Accepts the ox style (source, item, amount, metadata, slot) and the qb style
+-- (source, item, amount, slot, info, reason): a table in the 4th place is metadata.
 GlitchAbst.Inventory.AddItem = function(source, item, amount, metadata, slot, info, reason)
-    return exports['qb-inventory']:AddItem(source, item, amount, slot, info, reason or 'glitch-lib:addItem')
+    if type(metadata) ~= 'table' and metadata ~= nil and slot == nil then
+        slot = metadata
+        metadata = nil
+    end
+    local itemInfo = info or metadata
+    return exports['qb-inventory']:AddItem(source, item, tonumber(amount) or 1, slot or false, itemInfo, reason or 'glitch-lib:addItem')
 end
 
+-- Accepts (source, item, amount, slot, reason) and the ox style (source, item, amount, metadata, slot)
 GlitchAbst.Inventory.RemoveItem = function(source, item, amount, slot, reason)
-    return exports['qb-inventory']:RemoveItem(source, item, amount, slot or false, reason or 'glitch-lib:removeItem')
+    if type(slot) == 'table' then
+        -- ox style call: 4th is metadata (qb-inventory cannot match on it), 5th is the slot
+        slot = tonumber(reason)
+        reason = nil
+    end
+    return exports['qb-inventory']:RemoveItem(source, item, tonumber(amount) or 1, slot or false, type(reason) == 'string' and reason or 'glitch-lib:removeItem')
 end
 
 GlitchAbst.Inventory.SetInventory = function(source, items)
@@ -72,7 +105,15 @@ GlitchAbst.Inventory.UseItem = function(itemName, callback)
 end
 
 GlitchAbst.Inventory.HasItem = function(source, items, amount)
+    if type(amount) ~= 'number' then amount = nil end -- ox style passes metadata here
     return exports['qb-inventory']:HasItem(source, items, amount)
+end
+
+-- Item definitions (same shape as ox: Items() = all, Items(name) = one)
+GlitchAbst.Inventory.GetItems = function(itemName)
+    local items = SharedItems()
+    if itemName then return items[itemName] end
+    return items
 end
 
 -- Weight and slot information
@@ -106,7 +147,7 @@ GlitchAbst.Inventory.GetItemsByName = function(source, item)
 end
 
 GlitchAbst.Inventory.GetItemCount = function(source, items)
-    return exports['qb-inventory']:GetItemCount(source, items)
+    return tonumber(exports['qb-inventory']:GetItemCount(source, items)) or 0
 end
 
 -- Inventory state control
@@ -127,34 +168,35 @@ end
 -- Helper functions
 GlitchAbst.Inventory.HasEnoughOfItem = function(source, itemName, amount)
     local count = GlitchAbst.Inventory.GetItemCount(source, itemName)
-    return count >= amount, count
+    return count >= (tonumber(amount) or 1), count
 end
 
 GlitchAbst.Inventory.GiveItemToPlayer = function(source, target, item, amount, info)
-    if source == target then return false end
-    
+    if source == target or not target then return false end
+    if not GlitchAbst.Inventory.CanAddItem(target, item, amount) then return false end
+
     if GlitchAbst.Inventory.RemoveItem(source, item, amount, false, 'glitch-lib:giveItem') then
-        if GlitchAbst.Inventory.AddItem(target, item, amount, false, info, 'glitch-lib:receiveItem') then
+        if GlitchAbst.Inventory.AddItem(target, item, amount, nil, false, info, 'glitch-lib:receiveItem') then
             return true
         else
             -- Return the item if target couldn't receive it
-            GlitchAbst.Inventory.AddItem(source, item, amount, false, info, 'glitch-lib:returnItem')
+            GlitchAbst.Inventory.AddItem(source, item, amount, nil, false, info, 'glitch-lib:returnItem')
             return false
         end
     end
     return false
 end
+GlitchAbst.Inventory.GiveItem = GlitchAbst.Inventory.GiveItemToPlayer
 
-local QBCore = exports['qb-core']:GetCoreObject()
-
+-- Used by the client module's Search()
 QBCore.Functions.CreateCallback('glitch-lib:server:GetSlotsByItem', function(source, cb, itemName)
-    local Player = QBCore.Functions.GetPlayer(source)
-    local items = Player.PlayerData.Items
+    local player = QBCore.Functions.GetPlayer(source)
+    local items = player and player.PlayerData and player.PlayerData.items or {}
     cb(exports['qb-inventory']:GetSlotsByItem(items, itemName))
 end)
 
 QBCore.Functions.CreateCallback('glitch-lib:server:GetItemCount', function(source, cb, itemName)
-    cb(exports['qb-inventory']:GetItemCount(source, itemName))
+    cb(tonumber(exports['qb-inventory']:GetItemCount(source, itemName)) or 0)
 end)
 
 -- Create aliases for consistent function naming across the library

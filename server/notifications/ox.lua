@@ -18,6 +18,9 @@ end
 
 GlitchAbst.Utils.DebugLog('ox_lib server notifications module loaded')
 
+-- Types other systems use -> ox_lib types (inform, success, error, warning)
+local OX_TYPES = { info = 'inform', inform = 'inform', primary = 'inform', success = 'success', error = 'error', warning = 'warning', warn = 'warning' }
+
 -- Send notification to specific player
 GlitchAbst.ServerNotifications.Ox.Show = function(playerId, params)
     if not playerId or not params then return end
@@ -32,7 +35,7 @@ GlitchAbst.ServerNotifications.Ox.Show = function(playerId, params)
         duration = params.duration or 3000,                 -- Duration in ms
         showDuration = params.showDuration,                 -- Whether to show countdown
         position = params.position or 'top-right',          -- Position on screen
-        type = params.type or 'inform',                     -- Notification type
+        type = OX_TYPES[params.type or 'inform'] or 'inform', -- Notification type
         style = params.style,                               -- Custom CSS styles
         icon = params.icon,                                 -- FA6 icon name
         iconColor = params.iconColor,                       -- Icon color
@@ -58,7 +61,7 @@ GlitchAbst.ServerNotifications.Ox.Broadcast = function(params)
         duration = params.duration or 3000,
         showDuration = params.showDuration,
         position = params.position or 'top-right',
-        type = params.type or 'inform',
+        type = OX_TYPES[params.type or 'inform'] or 'inform',
         style = params.style,
         icon = params.icon,
         iconColor = params.iconColor,

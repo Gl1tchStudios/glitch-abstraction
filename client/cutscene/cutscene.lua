@@ -72,16 +72,25 @@ end
 -- forced to 8 (multiplayer context) and the streaming sphere is pre-loaded
 -- so GTA can resolve all the online content assets before RequestCutscene.
 GlitchAbst.Cutscene.Play = function(cutsceneName, options)
-    options = options or {}
+    if type(cutsceneName) ~= 'string' or cutsceneName == '' then
+        GlitchAbst.Utils.DebugLog('Cutscene.Play: no cutscene name given')
+        if type(options) == 'table' and options.onEnd then options.onEnd(false) end
+        return false
+    end
+    options = type(options) == 'table' and options or {}
     
-    -- Determine whether this is an online cutscene (mp_ prefix)
-    local isOnline = cutsceneName:sub(1, 3) == "mp_"
+    -- Online / DLC cutscene: the mp_ prefix, or the catalog (shared/cutscene-catalog.lua) says it has an MP_1 lead
+    local info = GlitchAbst.Cutscene.GetInfo and GlitchAbst.Cutscene.GetInfo(cutsceneName) or nil
+    local isOnline = cutsceneName:sub(1, 3) == "mp_" or (info ~= nil and info.lead ~= nil)
 
     -- Default options
     local config = {
         saveAppearance = options.saveAppearance ~= false, -- Default true
         restoreAppearance = options.restoreAppearance ~= false, -- Default true
         hidePlayer = options.hidePlayer or false,
+        -- castPlayer = false: the player only watches (nobody is registered in the lead slot)
+        castPlayer = options.castPlayer ~= false,
+        leadSlot = options.leadSlot or 'MP_1',
         -- hideSlots: list of slot names (e.g. {"MP_2","MP_3","MP_4"}) to suppress by
         -- registering invisible dummy peds so GTA doesn't spawn default bald characters.
         hideSlots = options.hideSlots or {},
@@ -148,8 +157,10 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
         SetModelAsNoLongerNeeded(dummyModel)
     end
     
-    -- Register default player entity
-    RegisterEntityForCutscene(playerPed, "MP_1", 0, 0, 64)
+    -- Register the player in the lead slot (story scenes have no MP_1, the game ignores it there)
+    if config.castPlayer then
+        RegisterEntityForCutscene(playerPed, config.leadSlot, 0, 0, 64)
+    end
     
     -- Register custom entities
     for name, data in pairs(config.customEntities) do
@@ -167,13 +178,16 @@ GlitchAbst.Cutscene.Play = function(cutsceneName, options)
     StartCutscene(0)
     GlitchAbst.Utils.DebugLog('StartCutscene called, waiting for MP_1 entity...')
     
-    local entityTimeout = GetGameTimer() + 5000
-    while not (DoesCutsceneEntityExist('MP_1', 0)) and GetGameTimer() < entityTimeout do
+    -- Only online / DLC scenes have the lead slot; story scenes would just sit out the 5 seconds
+    local entityTimeout = GetGameTimer() + ((isOnline and config.castPlayer) and 5000 or 0)
+    while not (DoesCutsceneEntityExist(config.leadSlot, 0)) and GetGameTimer() < entityTimeout do
         Citizen.Wait(0)
     end
 
-    if not DoesCutsceneEntityExist('MP_1', 0) then
-        GlitchAbst.Utils.DebugLog('WARNING: MP_1 entity never appeared — cutscene may still be playing')
+    if not (isOnline and config.castPlayer) then
+        GlitchAbst.Utils.DebugLog('Story or watch-only cutscene, no lead slot wait')
+    elseif not DoesCutsceneEntityExist(config.leadSlot, 0) then
+        GlitchAbst.Utils.DebugLog('WARNING: MP_1 entity never appeared, cutscene may still be playing')
     else
         GlitchAbst.Utils.DebugLog('MP_1 entity found, cutscene is running')
     end
@@ -267,8 +281,15 @@ GlitchAbst.Cutscene.GetTime = function()
     return GetCutsceneTime()
 end
 
--- Skip to a specific time in the cutscene (in ms)
+-- Total length of the loaded cutscene (in ms)
+GlitchAbst.Cutscene.GetDuration = function()
+    return GetCutsceneTotalDuration()
+end
+
+-- Skip to a specific time in the cutscene (in ms). GTA has no seek native for cutscenes in every
+-- build, so this returns false when SkipCutsceneToTime is missing.
 GlitchAbst.Cutscene.SkipToTime = function(time)
+    if not SkipCutsceneToTime then return false end
     if IsCutsceneActive() then
         SkipCutsceneToTime(time)
         return true

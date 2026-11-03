@@ -263,6 +263,9 @@ end
 
 -- Legacy support for existing functions
 GlitchAbst.UI.ContextMenu = function(id, title, options, position)
+    if options then
+        GlitchAbst.UI.RegisterContext({ id = id, title = title, options = options })
+    end
     return GlitchAbst.UI.ShowContext(id)
 end
 
@@ -458,6 +461,9 @@ end
 
 -- Progress bar with complete parameter support
 GlitchAbst.UI.ProgressBar = function(params)
+    params = params or {}
+    -- Config.ProgressCircle: every progress bar is the circle (bottom middle unless asked otherwise)
+    if Config.ProgressCircle then return GlitchAbst.UI.ProgressCircle(params) end
     return exports['ox_lib']:progressBar({
         duration = params.duration,
         label = params.label,
@@ -466,6 +472,7 @@ GlitchAbst.UI.ProgressBar = function(params)
         allowSwimming = params.allowSwimming,
         allowCuffed = params.allowCuffed,
         allowFalling = params.allowFalling,
+        disableInterruptCancellation = params.disableInterruptCancellation,
         canCancel = params.canCancel,
         anim = params.anim,
         prop = params.prop,
@@ -476,15 +483,17 @@ end
 
 -- Progress Circle with complete parameter support
 GlitchAbst.UI.ProgressCircle = function(params)
+    params = params or {}
     return exports['ox_lib']:progressCircle({
         duration = params.duration,
         label = params.label,
-        position = params.position or 'middle',
+        position = params.position or 'bottom',
         useWhileDead = params.useWhileDead,
         allowRagdoll = params.allowRagdoll,
         allowSwimming = params.allowSwimming,
         allowCuffed = params.allowCuffed,
         allowFalling = params.allowFalling,
+        disableInterruptCancellation = params.disableInterruptCancellation,
         canCancel = params.canCancel,
         anim = params.anim,
         prop = params.prop,
@@ -712,7 +721,7 @@ GlitchAbst.UI.Alert = function(titleOrParams, message, typeParam, icon)
     end
     
 
-    if exports and exports['ox_lib'] then
+    if GetResourceState('ox_lib') == 'started' then
         local result = exports['ox_lib']:alertDialog(params)
         return result
     else
