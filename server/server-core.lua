@@ -1,25 +1,7 @@
--- Make sure GlitchAbst is initialized
+-- shared/config-core.lua always creates GlitchAbst first (see fxmanifest load order)
 if GlitchAbst == nil then
-    print('[ERROR] GlitchAbst initialization failed in shared scripts - attempting emergency initialization')
-    GlitchAbst = {
-        Framework = {},
-        UI = {},
-        Target = {},
-        Inventory = {},
-        Progression = {},
-        DoorLock = {},
-        Cutscene = {},
-        Scaleform = {},
-        Notifications = {},
-        Database = {},
-        Utils = {},
-        IsReady = false
-    }
-
-    -- Add emergency debug function
-    GlitchAbst.Utils.DebugLog = function(message)
-        print('[GlitchAbst] ' .. tostring(message))
-    end
+    print('^1[glitch-abstraction] GlitchAbst missing: shared scripts did not load, check fxmanifest.lua^7')
+    return
 end
 
 -- Run once, even if something includes this file twice
@@ -124,10 +106,13 @@ end
 local function XPChoice()
     local choice = Config.xpSystem or 'auto'
     if choice ~= 'auto' then return choice end
-    if GetResourceState('glitch-xpSystem') ~= 'missing' or GetResourceState('glitch_xpSystem') ~= 'missing' then
+    local glitchState = GetResourceState('glitch-xpSystem')
+    local glitchAliasState = GetResourceState('glitch_xpSystem')
+    if (glitchState ~= 'missing' and glitchState ~= 'stopped')
+        or (glitchAliasState ~= 'missing' and glitchAliasState ~= 'stopped') then
         return 'glitch_xpSystem'
     end
-    if GetResourceState('pickle_xp') ~= 'missing' then return 'pickle_xp' end
+    if GetResourceState('pickle_xp') ~= 'missing' and GetResourceState('pickle_xp') ~= 'stopped' then return 'pickle_xp' end
     return nil
 end
 local XP_FILES = { glitch_xpSystem = 'glitch_xpsystem', pickle_xp = 'pickle_xp' }
@@ -148,12 +133,22 @@ local function LoadProgression()
     end
 end
 
+-- Cutscenes played on players + /cutsceneadmin (needs nothing else, loads once)
+local function LoadCutscenes()
+    if loaded.cutscene then return end
+    if not Utils.CutscenesEnabled() then return end
+    loaded.cutscene = true
+    local ok, res = Utils.LoadModule('server/cutscene/cutscene.lua')
+    if not ok then Utils.DebugLog('Could not load the cutscene module: ' .. tostring(res)) end
+end
+
 local function LoadAll()
     LoadFramework()
     LoadInventory()
     LoadDoorLock()
     LoadNotifications()
     LoadProgression()
+    LoadCutscenes()
 end
 
 -- No XP system: safe defaults so callers never index nil
@@ -179,18 +174,14 @@ LoadAll()
 CreateThread(function()
     Wait(1000)
 
-    print('^2+--------------------------------------------+^7')
-    print('^2|             GLITCH LIB LOADING             |^7')
-    print('^2+--------------------------------------------+^7')
-
     LoadAll()
 
     if not loaded.progression then ProgressionDefaults() end
     GlitchAbst.IsReady = loaded.framework and true or false
 
-    print('^2+--------------------------------------------+^7')
-    print('^2|           GLITCH LIB LOADED: ' .. (GlitchAbst.IsReady and '^2YES' or '^1NO ') .. '^2           |^7')
-    print('^2+--------------------------------------------+^7')
+    if Config.Debug or not GlitchAbst.IsReady then
+        print(('^2[glitch-abstraction] library ready: %s^7'):format(GlitchAbst.IsReady and 'yes' or 'no'))
+    end
     if not GlitchAbst.IsReady then
         print('^1[glitch-abstraction] No supported framework is running (es_extended, qbx_core or qb-core).^7')
     end

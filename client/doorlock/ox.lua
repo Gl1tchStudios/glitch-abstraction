@@ -27,7 +27,7 @@ GlitchAbst.Utils.DebugLog('ox_doorlock module loaded')
 local stateCache = {}
 
 -- ox_doorlock broadcasts every change with this event (id, state, source, data)
-AddEventHandler('ox_doorlock:setState', function(id, state)
+RegisterNetEvent('ox_doorlock:setState', function(id, state)
     if id ~= nil then stateCache[id] = state end
 end)
 

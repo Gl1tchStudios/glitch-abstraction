@@ -8,18 +8,35 @@ if GetResourceState('ox_inventory') ~= 'started' then
     return false
 end
 
+-- Tell ox_inventory which script called us, so its logs and the economy Materials tab name that script and not
+-- glitch-abstraction (ox_inventory patch: SetCaller). Restores the previous caller after, for nested calls.
+local current = nil
+local canTell = true
+local function asCaller(fn, ...)
+    local res = GetInvokingResource()
+    if not canTell or not res or res == GetCurrentResourceName() or res == current then return fn(...) end
+    local prev = current
+    current = res
+    if not pcall(function() exports.ox_inventory:SetCaller(res) end) then canTell = false end
+    local ok, a, b, c = pcall(fn, ...)
+    current = prev
+    if canTell then pcall(function() exports.ox_inventory:SetCaller(prev) end) end
+    if not ok then error(a, 0) end
+    return a, b, c
+end
+
 -- Existing functions first
 -- Item Management
 GlitchAbst.Inventory.AddItem = function(source, item, amount, metadata, slot, info, reason)
     if type(metadata) ~= 'table' and info then metadata = info end -- qb style call: info is the metadata
-    return exports.ox_inventory:AddItem(source, item, amount, type(metadata) == 'table' and metadata or nil, slot)
+    return asCaller(function() return exports.ox_inventory:AddItem(source, item, amount, type(metadata) == 'table' and metadata or nil, slot) end)
 end
 
 GlitchAbst.Inventory.RemoveItem = function(source, item, count, metadata, slot, ignoreTotal)
     if type(metadata) == 'number' and slot == nil then -- qb style call: (source, item, amount, slot)
         slot, metadata = metadata, nil
     end
-    return exports.ox_inventory:RemoveItem(source, item, count, type(metadata) == 'table' and metadata or nil, slot, ignoreTotal)
+    return asCaller(function() return exports.ox_inventory:RemoveItem(source, item, count, type(metadata) == 'table' and metadata or nil, slot, ignoreTotal) end)
 end
 
 GlitchAbst.Inventory.GetItem = function(source, item, metadata, returnsCount)
@@ -276,38 +293,53 @@ GlitchAbst.Inventory.RegisteredHooks = {}
 
 -- Register a hook for inventory events
 GlitchAbst.Inventory.RegisterHook = function(eventName, callback, options)
+    local owner = GetInvokingResource()
     local hookId = exports.ox_inventory:registerHook(eventName, callback, options)
     if not hookId then return nil end
 
-    -- Store the hook reference for later management
+    -- Store the hook reference for later management (owner = the resource that asked for it)
     GlitchAbst.Inventory.RegisteredHooks[hookId] = {
         id = hookId,
         event = eventName,
-        options = options
+        options = options,
+        owner = owner,
     }
 
     return hookId
 end
 
 -- Remove hooks (single or all from this resource)
-GlitchAbst.Inventory.RemoveHook = function(id)
-    exports.ox_inventory:removeHooks(id)
+-- Removes only hooks registered through this library, never other resources' hooks.
+local function removeHooksOf(owner)
+    for id, hook in pairs(GlitchAbst.Inventory.RegisteredHooks) do
+        if owner == nil or hook.owner == owner then
+            exports.ox_inventory:removeHooks(id)
+            GlitchAbst.Inventory.RegisteredHooks[id] = nil
+        end
+    end
+end
 
+GlitchAbst.Inventory.RemoveHook = function(id)
     if id then
+        exports.ox_inventory:removeHooks(id)
         GlitchAbst.Inventory.RegisteredHooks[id] = nil
     else
-        GlitchAbst.Inventory.RegisteredHooks = {}
+        removeHooksOf(GetInvokingResource())
     end
 
     return true
 end
 
--- Remove all hooks
+-- Remove all hooks the calling resource registered through this library
 GlitchAbst.Inventory.RemoveAllHooks = function()
-    exports.ox_inventory:removeHooks()
-    GlitchAbst.Inventory.RegisteredHooks = {}
+    removeHooksOf(GetInvokingResource())
     return true
 end
+
+-- A consumer that stops leaves dead callbacks behind in ox_inventory: remove its hooks
+AddEventHandler('onResourceStop', function(res)
+    removeHooksOf(res)
+end)
 
 -- Convenience alias
 GlitchAbst.Inventory.Hooks.Register = GlitchAbst.Inventory.RegisterHook

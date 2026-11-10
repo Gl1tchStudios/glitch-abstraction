@@ -1,4 +1,5 @@
--- Cutscene catalog: every GTA V cutscene name we know of (up to the winter 2025 update), sorted into
+-- Cutscene catalog: every GTA V cutscene in the game files (781 .cut files, read from every rpf and DLC pack on
+-- 2026-11-04, design/cutscene-dump), sorted into
 -- Story Mode / GTA Online / DLC / Rockstar test scenes, with the mission or update it belongs to and a
 -- description for each one.
 --
@@ -46,12 +47,13 @@ local DLC = {
     sabotage = 'Agents of Sabotage (2024)',
     fronts = 'Money Fronts (2025)',
     winter25 = 'Winter 2025 update',
+    summer26 = 'Summer 2026 update',
     unknown = 'Unsorted DLC',
 }
 local DLC_ORDER = {}
 for i, k in ipairs({ 'heists', 'lowriders', 'executives', 'impexp', 'bikers', 'gunrunning', 'smugglers', 'doomsday', 'afterhours',
     'arena', 'casino', 'casinoheist', 'cayo', 'tuners', 'contract', 'drugwars', 'mercs', 'chopshop', 'bounties', 'sabotage', 'fronts',
-    'winter25', 'unknown' }) do DLC_ORDER[DLC[k]] = i end
+    'winter25', 'summer26', 'unknown' }) do DLC_ORDER[DLC[k]] = i end
 
 -- Story sets (storyline order)
 local STORY = {
@@ -194,8 +196,8 @@ local GROUPS = {
     { '^mp_int_', O('GTA Online intro', 'The first-day scenes with Lamar and the early contacts.') },
     { '^gen9_mig', O('Character transfer intro', 'The Expanded and Enhanced intro for moving a character to the new consoles.') },
     { '^hao', O('Hao\'s Special Works', 'Hao and the Expanded and Enhanced car upgrades.', { guess = true }) },
-    { '^mpsui', O('GTA Online scene', 'An online scene, update not confirmed.', { guess = true }) },
-    { '^tale_', O('GTA Online scene', 'An online intro scene, update not confirmed.', { guess = true }) },
+    { '^mpsui', D('casino', 'Casino scene (mpsui)', 'A scene from the Diamond Casino pack.', { guess = true }) },
+    { '^tale_', D('afterhours', 'After Hours intro (tale)', 'An After Hours scene.', { guess = true }) },
 
     -- ---------------------------------------------------------------- DLC
     { '^heist_int', D('heists', 'Heists intro', 'Lester calls you in to start doing heists.') },
@@ -208,9 +210,10 @@ local GROUPS = {
     { '^low', D('lowriders', 'Lowriders', 'Lamar\'s lowrider missions with Benny.') },
     { '^apa_', D('executives', 'Heists in the new apartments', 'Heist scenes set in the Executives stilt and Eclipse apartments.') },
     { '^impexp', D('impexp', 'Import/Export', 'The vehicle warehouse intro.') },
-    { '^bmad', D('bikers', 'Bikers', 'The Bikers update intro.', { guess = true }) },
+    -- bmad / smun / tale: in the After Hours pack (mpbattle) in the game files, whatever the names suggest
+    { '^bmad', D('afterhours', 'After Hours intro (bmad)', 'An After Hours scene.', { guess = true }) },
     { '^bunk', D('gunrunning', 'Bunker intro', 'Agent 14 and your first bunker.') },
-    { '^smun', D('smugglers', 'Smuggler\'s Run intro', 'Ron and the hangar business.') },
+    { '^smun', D('afterhours', 'After Hours intro (smun)', 'An After Hours scene.', { guess = true }) },
     { '^hang_', D('smugglers', 'Hangar intro', 'Your first look round the hangar.') },
     { '^iaaj', D('doomsday', 'The Data Breaches', 'Act 1 of the Doomsday Heist, around the IAA.', { guess = true }) },
     { '^iaa_', D('doomsday', 'The Doomsday Heist intro', 'Lester, Agent 14 and the facility.') },
@@ -243,8 +246,11 @@ local GROUPS = {
     { '^xm24', D('sabotage', 'Agents of Sabotage', 'The factory and the sabotage jobs.') },
     { '^sum25', D('fronts', 'Money Fronts', 'Summer 2025 update scenes.', { guess = true }) },
     { '^xm25', D('winter25', 'Winter 2025 update', 'Winter 2025 update scenes, with Avi and the mansion.', { guess = true }) },
-    { '^jhrs', D('unknown', 'Unsorted DLC scene (jhrs)', 'A late DLC scene set, update not confirmed.', { guess = true }) },
-    { '^under', D('unknown', 'Unsorted DLC scene (under)', 'An intro scene set, update not confirmed.', { guess = true }) },
+    { '^sum26_kortz', D('summer26', 'The Kortz Center job', 'The Summer 2026 heist at the Kortz Center.', { guess = true }) },
+    { '^sum26', D('summer26', 'Summer 2026 update', 'Summer 2026 update scenes.', { guess = true }) },
+    -- jhrs / under: base game files (x64c.rpf), not DLC
+    { '^jhrs', S(STORY.heists, 'The Jewel Store Job: extra scenes', 'Extra Jewel Store Job scenes, not matched to a moment yet.', { guess = true }) },
+    { '^under', { src = 'other', set = 'Test and leftover scenes', title = 'Unsorted base game scene (under)', blurb = 'In the base game files, not matched to a mission yet.', guess = true } },
 }
 
 -- Hand-written lines (replace the generated "mission - part. blurb")
@@ -443,6 +449,9 @@ local NAMES = {
     'xm3_drg2_rhb_mcs1', 'xm4_cbr6_agg_int', 'xm4_cbr6_slth_int', 'xm4_cbr_fin_ext', 'xm4_cbr_fin_ext2',
     'xm4_cbr_vin_int', 'xm4_cbr_vin_int2', 'xm4_rob_cas_mcs1', 'xm4_rob_cas_mcs2', 'xm4_rob_ship_mcs1',
     'xm4_rob_sub_mcs1', 'xm4_rr_fin_mcs1', 'xm4_rr_fin_mcs2', 'xm4_yard_ext', 'xm4_yard_int',
+    -- 2026-11-04: the Summer 2026 pack (mp2026_01), found in the game files
+    'sum26_heist_int', 'sum26_kortz_cel', 'sum26_kortz_esc_mcs3', 'sum26_kortz_exta', 'sum26_kortz_extb',
+    'sum26_kortz_las_mcs2', 'sum26_kortz_rpl_mcs1a', 'sum26_kortz_swr_mcs1c', 'sum26_kortz_van_mcs1b',
 }
 
 -- --- description builder -----------------------------------------------------------------------

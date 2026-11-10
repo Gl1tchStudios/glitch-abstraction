@@ -73,6 +73,37 @@ local function Names(optionNames)
     return optionNames
 end
 
+-- ox_target attributes everything added here to glitch-abstraction, so zones and global options are
+-- tracked per requesting resource and removed when that resource stops.
+local ownedZones = {}   -- [resource] = { zone ids }
+local ownedGlobals = {} -- [resource] = { { remove = export name, names = {...} } }
+
+local function trackZone(owner, id)
+    if owner and id ~= nil then
+        ownedZones[owner] = ownedZones[owner] or {}
+        ownedZones[owner][#ownedZones[owner] + 1] = id
+    end
+    return id
+end
+
+local function trackGlobal(owner, remove, options)
+    if not owner or type(options) ~= 'table' then return end
+    local names = {}
+    for _, o in ipairs(options) do if type(o) == 'table' and o.name then names[#names + 1] = o.name end end
+    if #names == 0 then return end
+    ownedGlobals[owner] = ownedGlobals[owner] or {}
+    ownedGlobals[owner][#ownedGlobals[owner] + 1] = { remove = remove, names = names }
+end
+
+AddEventHandler('onClientResourceStop', function(res)
+    for _, id in ipairs(ownedZones[res] or {}) do pcall(function() exports.ox_target:removeZone(id) end) end
+    ownedZones[res] = nil
+    for _, g in ipairs(ownedGlobals[res] or {}) do
+        pcall(function() exports.ox_target[g.remove](exports.ox_target, g.names) end)
+    end
+    ownedGlobals[res] = nil
+end)
+
 -- Add a target entity
 GlitchAbst.Target.AddTargetEntity = function(entities, options)
     return exports.ox_target:addLocalEntity(entities, Normalize(options))
@@ -90,7 +121,7 @@ GlitchAbst.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
         local zone = {}
         for k, v in pairs(arg1) do zone[k] = v end
         zone.options = Normalize(arg1.options)
-        return exports.ox_target:addBoxZone(zone)
+        return trackZone(GetInvokingResource(), exports.ox_target:addBoxZone(zone))
     end
 
     local name = arg1
@@ -116,7 +147,7 @@ GlitchAbst.Target.AddBoxZone = function(arg1, arg2, arg3, arg4, arg5, arg6)
         options = Normalize(targetOptions)
     }
 
-    return exports.ox_target:addBoxZone(boxZone)
+    return trackZone(GetInvokingResource(), exports.ox_target:addBoxZone(boxZone))
 end
 
 -- Add a sphere zone: AddSphereZone({ coords, radius, options }) or AddSphereZone(name, center, radius, options, targetOptions)
@@ -125,7 +156,7 @@ GlitchAbst.Target.AddSphereZone = function(name, center, radius, options, target
         local zone = {}
         for k, v in pairs(name) do zone[k] = v end
         zone.options = Normalize(name.options)
-        return exports.ox_target:addSphereZone(zone)
+        return trackZone(GetInvokingResource(), exports.ox_target:addSphereZone(zone))
     end
     options = options or {}
     local sphereZone = {
@@ -135,7 +166,7 @@ GlitchAbst.Target.AddSphereZone = function(name, center, radius, options, target
         debug = options.debugPoly or false,
         options = Normalize(targetOptions)
     }
-    return exports.ox_target:addSphereZone(sphereZone)
+    return trackZone(GetInvokingResource(), exports.ox_target:addSphereZone(sphereZone))
 end
 
 -- Remove a zone by the id AddBoxZone/AddSphereZone/AddPolyZone returned, or by name
@@ -147,17 +178,23 @@ end
 
 -- Add target for all players
 GlitchAbst.Target.AddGlobalPlayer = function(options)
-    exports.ox_target:addGlobalPlayer(Normalize(options))
+    options = Normalize(options)
+    trackGlobal(GetInvokingResource(), 'removeGlobalPlayer', options)
+    exports.ox_target:addGlobalPlayer(options)
 end
 
 -- Add target for all vehicles
 GlitchAbst.Target.AddGlobalVehicle = function(options)
-    exports.ox_target:addGlobalVehicle(Normalize(options))
+    options = Normalize(options)
+    trackGlobal(GetInvokingResource(), 'removeGlobalVehicle', options)
+    exports.ox_target:addGlobalVehicle(options)
 end
 
 -- Add target for all objects
 GlitchAbst.Target.AddGlobalObject = function(options)
-    exports.ox_target:addGlobalObject(Normalize(options))
+    options = Normalize(options)
+    trackGlobal(GetInvokingResource(), 'removeGlobalObject', options)
+    exports.ox_target:addGlobalObject(options)
 end
 
 -- Enable/disable the targeting system
@@ -167,7 +204,9 @@ end
 
 -- Add a global option that appears for all entities
 GlitchAbst.Target.AddGlobalOption = function(options)
-    return exports.ox_target:addGlobalOption(Normalize(options))
+    options = Normalize(options)
+    trackGlobal(GetInvokingResource(), 'removeGlobalOption', options)
+    return exports.ox_target:addGlobalOption(options)
 end
 
 -- Remove global options
@@ -177,7 +216,9 @@ end
 
 -- Add target for all peds (except players)
 GlitchAbst.Target.AddGlobalPed = function(options)
-    exports.ox_target:addGlobalPed(Normalize(options))
+    options = Normalize(options)
+    trackGlobal(GetInvokingResource(), 'removeGlobalPed', options)
+    exports.ox_target:addGlobalPed(options)
 end
 
 -- Remove target for all peds
@@ -227,7 +268,7 @@ GlitchAbst.Target.AddPolyZone = function(name, points, options, targetOptions)
         local zone = {}
         for k, v in pairs(name) do zone[k] = v end
         zone.options = Normalize(name.options)
-        return exports.ox_target:addPolyZone(zone)
+        return trackZone(GetInvokingResource(), exports.ox_target:addPolyZone(zone))
     end
     options = options or {}
     local thickness = options.height or options.thickness or 4.0
@@ -248,7 +289,7 @@ GlitchAbst.Target.AddPolyZone = function(name, points, options, targetOptions)
         drawSprite = options.drawSprite,
         options = Normalize(targetOptions)
     }
-    return exports.ox_target:addPolyZone(polyZone)
+    return trackZone(GetInvokingResource(), exports.ox_target:addPolyZone(polyZone))
 end
 
 -- Add aliases for consistency with other naming conventions

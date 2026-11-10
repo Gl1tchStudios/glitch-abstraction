@@ -57,8 +57,17 @@ GlitchAbst.Framework.GetPlayer = function(source)
 end
 
 -- Register a server callback
+-- Same handler shape as QBCore: cb(source, respond, ...). Runs on lib.callback.
 GlitchAbst.Framework.RegisterCallback = function(name, cb)
-    QBCore.Functions.CreateCallback(name, cb)
+    if type(name) ~= 'string' or type(cb) ~= 'function' then return false end
+    lib.callback.register(name, function(source, ...)
+        local p = promise.new()
+        local args = { ... }
+        SetTimeout(15000, function() p:resolve({}) end) -- a handler that never answers must not hang
+        cb(source, function(...) p:resolve({ ... }) end, table.unpack(args))
+        local out = Citizen.Await(p)
+        return table.unpack(out)
+    end)
     return true
 end
 
@@ -146,7 +155,8 @@ GlitchAbst.Framework.RegisterUsableItem = function(item, cb)
 end
 
 GlitchAbst.Framework.UseItem = function(source, item)
-    -- QBCore doesn't have a direct UseItem function
+    -- Only qb-inventory handles this event; ox_inventory has no server-side "use" trigger.
+    if GetResourceState('qb-inventory') ~= 'started' then return false end
     TriggerClientEvent('inventory:client:UseItem', source, item)
     return true
 end

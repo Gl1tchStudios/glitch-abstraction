@@ -57,3 +57,88 @@ function GlitchAbst.Utils.MoneyArgs(a, b)
     end
     return nil, tonumber(a)
 end
+
+-- True when the cutscene tools (stream and admin modules) should load: Config.Cutscenes.Enabled
+-- is true, or 'auto' with glitch-mapHandler installed.
+function GlitchAbst.Utils.CutscenesEnabled()
+    local c = Config.Cutscenes and Config.Cutscenes.Enabled
+    if c == nil or c == 'auto' then
+        return GetResourceState('glitch-mapHandler') ~= 'missing'
+    end
+    return c == true
+end
+
+-- Money arguments must be finite numbers; fractions are floored.
+local rawMoneyArgs = GlitchAbst.Utils.MoneyArgs
+function GlitchAbst.Utils.MoneyArgs(a, b)
+    local account, amount = rawMoneyArgs(a, b)
+    if amount and (amount ~= amount or amount == math.huge or amount == -math.huge) then amount = nil end
+    if amount then amount = math.floor(amount) end
+    return account, amount
+end
+
+-- Framework detection. Qbox (qbx_core) provides 'qb-core' and ships a QBCore
+-- compatible object, so it uses the QBCore modules; GlitchAbst.IsQbox tells them apart.
+local function Running(resourceName)
+    local state = GetResourceState(resourceName)
+    return state == 'started' or state == 'starting'
+end
+
+function GlitchAbst.Utils.DetectFramework()
+    local configFramework = Config.UseFramework
+    GlitchAbst.IsQbox = Running('qbx_core')
+
+    if configFramework and configFramework ~= 'auto' then
+        if configFramework == 'QBox' or configFramework == 'Qbox' then configFramework = 'QBCore' end
+        GlitchAbst.Utils.DebugLog('Using configured framework: ' .. configFramework)
+        return configFramework
+    end
+
+    local detected
+    if Running('es_extended') then
+        detected = 'ESX'
+    elseif Running('qbx_core') or Running('qb-core') then
+        detected = 'QBCore'
+    end
+
+    if detected then
+        GlitchAbst.Utils.DebugLog('Auto-detected framework: ' .. detected .. (GlitchAbst.IsQbox and ' (Qbox)' or ''))
+    else
+        GlitchAbst.Utils.DebugLog('WARNING: No supported framework detected yet')
+        detected = 'unknown'
+    end
+
+    return detected
+end
+
+function GlitchAbst.Utils.DetectUISystem()
+    local configUI = Config.UISystem or 'auto'
+    local detected
+
+    if configUI ~= 'auto' then
+        GlitchAbst.Utils.DebugLog('Using configured UI system: ' .. configUI)
+        return configUI
+    end
+
+    for _, ui in ipairs(Config.UI or {}) do
+        if Running(ui.resourceName) then
+            detected = ui.name
+            break
+        end
+    end
+
+    -- Fall back to the detected framework if no UI system is found
+    if not detected and GlitchAbst.FrameworkName and GlitchAbst.FrameworkName ~= 'unknown' then
+        detected = GlitchAbst.FrameworkName == 'QBCore' and 'qb' or string.lower(GlitchAbst.FrameworkName)
+    end
+
+    if not detected then
+        GlitchAbst.Utils.DebugLog('WARNING: No UI system detected, using default')
+        detected = 'ox'
+    end
+    return detected
+end
+
+-- Detected once at load (the cores detect again if the framework was not running yet)
+GlitchAbst.FrameworkName = GlitchAbst.Utils.DetectFramework()
+GlitchAbst.UISystem = GlitchAbst.Utils.DetectUISystem()

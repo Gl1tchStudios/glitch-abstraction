@@ -79,7 +79,7 @@ GlitchAbst.Inventory.AddItem = function(source, item, amount, metadata, slot, in
         metadata = nil
     end
     local itemInfo = info or metadata
-    return exports['qb-inventory']:AddItem(source, item, tonumber(amount) or 1, slot or false, itemInfo, reason or 'glitch-lib:addItem')
+    return exports['qb-inventory']:AddItem(source, item, tonumber(amount) or 1, slot or false, itemInfo, reason or 'glitch-abstraction:addItem')
 end
 
 -- Accepts (source, item, amount, slot, reason) and the ox style (source, item, amount, metadata, slot)
@@ -89,7 +89,7 @@ GlitchAbst.Inventory.RemoveItem = function(source, item, amount, slot, reason)
         slot = tonumber(reason)
         reason = nil
     end
-    return exports['qb-inventory']:RemoveItem(source, item, tonumber(amount) or 1, slot or false, type(reason) == 'string' and reason or 'glitch-lib:removeItem')
+    return exports['qb-inventory']:RemoveItem(source, item, tonumber(amount) or 1, slot or false, type(reason) == 'string' and reason or 'glitch-abstraction:removeItem')
 end
 
 GlitchAbst.Inventory.SetInventory = function(source, items)
@@ -175,12 +175,12 @@ GlitchAbst.Inventory.GiveItemToPlayer = function(source, target, item, amount, i
     if source == target or not target then return false end
     if not GlitchAbst.Inventory.CanAddItem(target, item, amount) then return false end
 
-    if GlitchAbst.Inventory.RemoveItem(source, item, amount, false, 'glitch-lib:giveItem') then
-        if GlitchAbst.Inventory.AddItem(target, item, amount, nil, false, info, 'glitch-lib:receiveItem') then
+    if GlitchAbst.Inventory.RemoveItem(source, item, amount, false, 'glitch-abstraction:giveItem') then
+        if GlitchAbst.Inventory.AddItem(target, item, amount, nil, false, info, 'glitch-abstraction:receiveItem') then
             return true
         else
             -- Return the item if target couldn't receive it
-            GlitchAbst.Inventory.AddItem(source, item, amount, nil, false, info, 'glitch-lib:returnItem')
+            GlitchAbst.Inventory.AddItem(source, item, amount, nil, false, info, 'glitch-abstraction:returnItem')
             return false
         end
     end
@@ -189,13 +189,13 @@ end
 GlitchAbst.Inventory.GiveItem = GlitchAbst.Inventory.GiveItemToPlayer
 
 -- Used by the client module's Search()
-QBCore.Functions.CreateCallback('glitch-lib:server:GetSlotsByItem', function(source, cb, itemName)
+QBCore.Functions.CreateCallback('glitch-abstraction:server:GetSlotsByItem', function(source, cb, itemName)
     local player = QBCore.Functions.GetPlayer(source)
     local items = player and player.PlayerData and player.PlayerData.items or {}
     cb(exports['qb-inventory']:GetSlotsByItem(items, itemName))
 end)
 
-QBCore.Functions.CreateCallback('glitch-lib:server:GetItemCount', function(source, cb, itemName)
+QBCore.Functions.CreateCallback('glitch-abstraction:server:GetItemCount', function(source, cb, itemName)
     cb(tonumber(exports['qb-inventory']:GetItemCount(source, itemName)) or 0)
 end)
 

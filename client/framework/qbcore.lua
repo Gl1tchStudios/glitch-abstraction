@@ -46,7 +46,7 @@ end
 
 -- Callbacks
 GlitchAbst.Framework.TriggerCallback = function(name, cb, ...)
-    QBCore.Functions.TriggerCallback(name, cb, ...)
+    lib.callback(name, false, cb, ...)
 end
 
 -- Notifications
@@ -93,7 +93,11 @@ GlitchAbst.Framework.SpawnPlayer = function(coords, callback)
     local meta = data.metadata or {}
     if meta.isdead or meta.inlaststand or IsEntityDead(PlayerPedId()) then
         -- Player is dead, revive first
-        TriggerEvent("hospital:client:Revive")
+        if GlitchAbst.IsQbox and GetResourceState("qbx_medical") == "started" then
+            TriggerEvent("qbx_medical:client:playerRevived")
+        else
+            TriggerEvent("hospital:client:Revive")
+        end
         SetTimeout(1000, function()
             Teleport(coords, callback)
         end)

@@ -235,6 +235,13 @@ local function LoadExtras()
 
     ok, err = Utils.LoadModule('client/cutscene/cutscene.lua')
     if not ok then Utils.DebugLog('Failed to load cutscene module: ' .. tostring(err)) end
+
+    -- cutscenes played on this player with the map streamed (server/cutscene) + the /cutsceneadmin browser
+    -- (optional, see Config.Cutscenes.Enabled)
+    for _, file in ipairs(Utils.CutscenesEnabled() and { 'client/cutscene/stream.lua', 'client/cutscene/admin.lua' } or {}) do
+        ok, err = Utils.LoadModule(file)
+        if not ok then Utils.DebugLog('Failed to load ' .. file .. ': ' .. tostring(err)) end
+    end
 end
 
 local function LoadAll(final)
